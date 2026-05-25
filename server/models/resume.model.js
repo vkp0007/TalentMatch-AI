@@ -1,37 +1,75 @@
 import mongoose from "mongoose";
 
-const resumeSchema = new mongoose.Schema(
-  {
-    originalName: {
-      type: String,
-      required: true
+
+const ResumeSchema = new mongoose.Schema({
+
+    userId: {
+
+        type: mongoose.Schema.Types.ObjectId,
+
+        ref: "User",
+
+        required: true
     },
 
-    fileName: {
-      type: String,
-      required: true
+    resumeName: {
+
+        type: String,
+
+        required: true
     },
 
-    filePath: {
-      type: String,
-      required: true
+    targetRole: {
+
+        type: String,
+
+        default: ""
     },
 
-    fileType: {
-      type: String,
-      enum: ["pdf", "docx"],
-      required: true
+    originalFileName: {
+
+        type: String,
+
+        required: true
     },
 
-    extractedText: {
-      type: String,
-      default: ""
+    fileUrl: {
+
+        type: String,
+
+        required: true
+    },
+
+    resumeText: {
+
+        type: String,
+
+        required: true
+    },
+
+    parsedData: {
+
+        type: Object,
+
+        default: {}
+    },
+
+    embedding: {
+
+        type: [Number],
+
+        default: []
     }
-  },
-  {
+
+}, {
+
     timestamps: true
-  }
+})
+
+
+export const Resume = mongoose.model(
+
+    "Resume",
+
+    ResumeSchema
 );
-
-export const Resume = mongoose.model("Resume", resumeSchema);
-

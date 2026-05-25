@@ -3,7 +3,9 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 
 import { databaseConnection } from './config/dbConnection.js';
-import resumeRoute from "./routes/resumeRoutes.js";
+import resumeRoute from "./routes/resume.routes.js";
+import analysisRoute from "./routes/analysis.routes.js";
+import authRoutes from "./routes/auth.routes.js"
 
 dotenv.config({ path: '.env' });
 
@@ -13,7 +15,12 @@ const port = process.env.PORT || 3000;
 
 // middleware
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true
+  })
+);
 
 // database connection
 databaseConnection();
@@ -21,11 +28,11 @@ databaseConnection();
 
 
 // routes
-app.get('/', (req, res) => {
-  res.send('TalentMatch AI API Running');
-});
 
 app.use("/api/resume", resumeRoute);
+app.use("/api/analysis", analysisRoute);
+app.use("/api/auth", authRoutes);
+
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
