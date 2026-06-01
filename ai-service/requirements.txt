@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sentence-transformers
+torch
+scikit-learn
+pdfplumber
+pymupdf
+python-docx
+groq
+python-multipart
+python-dotenv
