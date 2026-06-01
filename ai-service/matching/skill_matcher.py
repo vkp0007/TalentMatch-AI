@@ -1,7 +1,7 @@
 import logging
 
-from sentence_transformers import (
-    SentenceTransformer
+from models.embedding_model import (
+    get_embedding_model
 )
 
 from sklearn.metrics.pairwise import (
@@ -17,6 +17,8 @@ from utils.skill_normalizer import (
 )
 
 
+
+
 # =========================================================
 # LOGGER
 # =========================================================
@@ -26,20 +28,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-
-# =========================================================
-# LOAD MODEL ONCE
-# =========================================================
-
-MODEL_NAME = (
-    "all-MiniLM-L6-v2"
-)
-
-model = SentenceTransformer(
-    MODEL_NAME
-)
-
 
 
 # =========================================================
@@ -341,15 +329,21 @@ def compare_skills(
     # =====================================================
     # EMBEDDINGS
     # =====================================================
+        # =====================================================
+    # EMBEDDINGS
+    # =====================================================
 
     try:
+
+        model = (
+            get_embedding_model()
+        )
 
         candidate_embeddings = (
             model.encode(
                 candidate_skills
             )
         )
-
 
         jd_embeddings = (
             model.encode(
@@ -380,7 +374,6 @@ def compare_skills(
 
 
     matched_candidate_skills = set()
-
 
     # =====================================================
     # SEMANTIC MATCHING

@@ -1,7 +1,7 @@
 import logging
 
-from sentence_transformers import (
-    SentenceTransformer
+from models.embedding_model import (
+    get_embedding_model
 )
 
 from sklearn.metrics.pairwise import (
@@ -19,22 +19,6 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-
-
-
-# =========================================================
-# LOAD MODEL ONCE
-# =========================================================
-
-MODEL_NAME = (
-    "all-MiniLM-L6-v2"
-)
-
-model = SentenceTransformer(
-    MODEL_NAME
-)
-
-
 
 # =========================================================
 # CLEAN TEXT
@@ -92,9 +76,13 @@ def generate_embedding(text):
         # GENERATE EMBEDDING
         # =================================================
 
-        embedding = model.encode(
-            text
-        )
+        model = (
+        get_embedding_model()
+                )
+
+        embedding = (
+            model.encode(text)
+              )
 
 
         return embedding.tolist()
@@ -175,9 +163,15 @@ def calculate_similarity(
         # GENERATE JD EMBEDDING
         # =================================================
 
-        jd_embedding = model.encode(
-            job_description
-        )
+        model = (
+        get_embedding_model()
+         )
+
+        jd_embedding = (
+         model.encode(
+        job_description
+          )
+      )
 
 
         # =================================================

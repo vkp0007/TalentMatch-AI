@@ -7,5 +7,4 @@ pdfplumber
 pymupdf
 python-docx
 groq
-python-multipart
 python-dotenv
