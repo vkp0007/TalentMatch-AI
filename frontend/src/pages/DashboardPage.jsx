@@ -4,22 +4,22 @@ import {
 } from "react";
 
 import DashboardLayout
-from "../components/layout/DashboardLayout";
+    from "../components/layout/DashboardLayout";
 
 import Topbar
-from "../components/layout/Topbar";
+    from "../components/layout/Topbar";
 
 import ResumeSection
-from "../components/dashboard/ResumeSection";
+    from "../components/dashboard/ResumeSection";
 
 import AnalysisSection
-from "../components/dashboard/AnalysisSection";
+    from "../components/dashboard/AnalysisSection";
 
 import LoadingState
-from "../components/dashboard/LoadingState";
+    from "../components/dashboard/LoadingState";
 
 import ErrorState
-from "../components/dashboard/ErrorState";
+    from "../components/dashboard/ErrorState";
 
 import {
     getUserResumes
@@ -110,15 +110,28 @@ const DashboardPage = () => {
                 !error
                 &&
                 (
-                    <>
+                    <div
+                        className="
+
+            grid
+            grid-cols-1
+            xl:grid-cols-2
+            gap-8
+
+            "
+                    >
+
                         <ResumeSection
-                            resumes={resumes}
+                            resumes={resumes.slice(0, 3)}
+                            compact={true}
                         />
 
                         <AnalysisSection
-                            analyses={analyses}
+                            analyses={analyses.slice(0, 3)}
+                            compact={true}
                         />
-                    </>
+
+                    </div>
                 )
             }
 

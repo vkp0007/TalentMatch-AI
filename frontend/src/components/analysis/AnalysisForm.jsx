@@ -10,7 +10,7 @@ const AnalysisForm = ({
 
     return (
 
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 mb-10">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 mb-8">
 
             {
                 error && (
@@ -25,7 +25,7 @@ const AnalysisForm = ({
 
             <form
                 onSubmit={handleAnalyze}
-                className="space-y-8"
+                className="space-y-5"
             >
 
                 <div>
@@ -56,7 +56,7 @@ const AnalysisForm = ({
                     </label>
 
                     <textarea
-                        rows="12"
+                        rows="6"
                         placeholder="Paste job description here..."
                         value={jobDescription}
                         onChange={(e) =>
@@ -73,15 +73,24 @@ const AnalysisForm = ({
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white py-5 rounded-2xl font-medium text-lg"
+                    className="
+    w-full
+    bg-slate-900
+    hover:bg-slate-800
+    text-white
+    py-3
+    rounded-xl
+    font-medium
+    transition-all
+    "
                 >
 
                     {
                         loading
-                        ?
-                        "Running AI Analysis..."
-                        :
-                        "Analyze Resume"
+                            ?
+                            "Running AI Analysis..."
+                            :
+                            "Analyze Resume"
                     }
 
                 </button>

@@ -1,22 +1,25 @@
 import ResumeCard from "./ResumeCard";
 import EmptyState from "./EmptyState";
 
-const ResumeSection = ({ resumes }) => {
+const ResumeSection = ({
+    resumes = [],
+    compact = false
+}) => {
 
     return (
 
-        <div className="mb-14">
+        <div>
 
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-5">
 
                 <div>
 
-                    <h2 className="text-3xl font-bold text-slate-900">
+                    <h2 className="text-2xl font-bold text-slate-900">
                         Uploaded Resumes
                     </h2>
 
-                    <p className="text-slate-500 mt-2">
-                        Manage uploaded resumes and start ATS analysis
+                    <p className="text-slate-500 mt-1 text-sm">
+                        Manage uploaded resumes
                     </p>
 
                 </div>
@@ -34,7 +37,7 @@ const ResumeSection = ({ resumes }) => {
                 )
                 :
                 (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="space-y-4">
 
                         {
                             resumes.map((resume) => (

@@ -52,14 +52,14 @@ const Topbar = ({
     return (
 
         <header
-            className="flex items-center justify-between mb-12"
+            className="flex items-center justify-between mb-6"
         >
 
             {/* LEFT */}
 
             <div>
 
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                     {title}
                 </h1>
 

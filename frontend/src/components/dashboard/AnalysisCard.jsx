@@ -88,7 +88,7 @@ const AnalysisCard = ({
             bg-white
             border
             border-slate-200
-            rounded-3xl
+            rounded-2xl
             p-5
             hover:shadow-md
             transition-all

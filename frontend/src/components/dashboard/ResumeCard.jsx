@@ -4,51 +4,73 @@ const ResumeCard = ({ resume }) => {
 
     return (
 
-        <div className="bg-white border border-slate-200 rounded-3xl p-7 hover:shadow-md transition-all duration-300">
+        <div
+            className="
 
-            <div className="flex items-start justify-between">
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            p-4
+            hover:shadow-md
+            transition-all
+            duration-300
 
-                <div>
+            "
+        >
 
-                    <h3 className="text-2xl font-semibold text-slate-900">
+            <div className="flex items-start justify-between gap-4">
+
+                <div className="min-w-0">
+
+                    <h3
+                        className="
+
+                        text-lg
+                        font-semibold
+                        text-slate-900
+                        truncate
+
+                        "
+                    >
                         {resume.resumeName}
                     </h3>
 
-                   
-
                 </div>
 
-                <div className="px-4 py-2 rounded-2xl bg-slate-100 text-slate-700 text-sm font-medium">
-                     <p className="text-slate-500 ">
+                <span
+                    className="
 
-                        Uploaded on {
+                    text-xs
+                    text-slate-500
+                    shrink-0
 
-                            new Date(
-                                resume.createdAt
-                            ).toLocaleDateString()
-                        }
-
-                    </p>
-                </div>
+                    "
+                >
+                    {
+                        new Date(
+                            resume.createdAt
+                        ).toLocaleDateString()
+                    }
+                </span>
 
             </div>
 
-            <div className="mt-8 flex items-center justify-end">
+            <div className="mt-4 flex justify-end">
 
                 <Link
                     to={`/analysis/${resume._id}`}
                     className="
 
-                    px-5
-                    py-3
-                    rounded-2xl
+                    px-4
+                    py-2
+                    rounded-xl
                     bg-slate-900
                     hover:bg-slate-800
                     text-white
-                    transition-all
-                    duration-300
-                    text-sm
+                    text-xs
                     font-medium
+                    transition-all
 
                     "
                 >
