@@ -294,24 +294,18 @@ GROQ_API_KEY=your_groq_api_key
 
 Add screenshots here:
 
-### Dashboard
+## Dashboard
 
-```text
-<img width="1894" height="867" alt="image" src="https://github.com/user-attachments/assets/6480afbf-fb31-4e79-990f-28a94f25fe8f" />
+![Dashboard](screenshots/dashboard.png)
 
-```
+## Upload Resume
 
-### Resume Upload
+![Upload Resume](screenshots/upload.png)
 
-```text
-<img width="1477" height="877" alt="image" src="https://github.com/user-attachments/assets/b716e389-90c2-47ce-9ed4-bdd350de5dca" />
+## ATS Analysis Report
 
-```
+![ATS Report](screenshots/report.png)
 
-### ATS Analysis Report
-
-```text
-<img width="1473" height="872" alt="image" src="https://github.com/user-attachments/assets/75387e7e-6dab-420c-98a3-bfd0fb5acaee" />
 
 ```
 
