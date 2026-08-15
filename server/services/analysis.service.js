@@ -4,21 +4,20 @@ from "../models/resume.model.js";
 import { ResumeAnalysis }
 from "../models/analysis.model.js";
 
-import { analyzeResumeAI }
+import {
+    analyzeJobAI
+}
 from "./ai.service.js";
 
 
-
 // =========================================================
-// ANALYZE RESUME
+// ANALYZE RESUME AGAINST JOB
 // =========================================================
 
 export const analyzeResumeService = async ({
-
     userId,
     resumeId,
     jobDescription
-
 }) => {
 
     try {
@@ -45,19 +44,48 @@ export const analyzeResumeService = async ({
 
 
         // =================================================
-        // AI ANALYSIS
+        // VALIDATE PARSED DATA
+        // =================================================
+
+        if (
+            !resume.parsedData ||
+            Object.keys(
+                resume.parsedData
+            ).length === 0
+        ) {
+
+            throw new Error(
+                "Resume data not available"
+            );
+        }
+
+
+        // =================================================
+        // VALIDATE EMBEDDING
+        // =================================================
+
+        if (
+            !resume.embedding ||
+            resume.embedding.length !== 384
+        ) {
+
+            throw new Error(
+                "Valid resume embedding not found"
+            );
+        }
+
+
+        // =================================================
+        // CALL PYTHON AI SERVICE
         // =================================================
 
         const analysisData =
-            await analyzeResumeAI({
+            await analyzeJobAI({
 
-                resumeText:
-                    resume.resumeText,
-
-                parsedData:
+                resumeData:
                     resume.parsedData,
 
-                embedding:
+                resumeEmbedding:
                     resume.embedding,
 
                 jobDescription
@@ -65,101 +93,132 @@ export const analyzeResumeService = async ({
 
 
         // =================================================
-        // PREVENT EMPTY ANALYSIS
+        // VALIDATE AI RESPONSE
         // =================================================
 
-        if (!analysisData) {
+        if (
+            !analysisData ||
+            !analysisData.success
+        ) {
 
             throw new Error(
-                "AI analysis failed"
+                analysisData?.message ||
+                "AI job analysis failed"
             );
         }
 
 
-        // =================================================
-        // STORE ANALYSIS
-        // =================================================
+        const jdProfile =
+            analysisData.jdProfile || {};
 
         const analysis =
-            await ResumeAnalysis.create({
-
-                userId,
-
-                resumeId,
-
-                targetRole:
-                    resume.targetRole || "",
-
-                jobDescription,
-
-                semanticScore:
-                    analysisData.semanticScore || 0,
-
-                skillScore:
-                    analysisData.skillScore || 0,
-
-                finalScore:
-                    analysisData.finalScore || 0,
-
-                matchedSkills:
-                    analysisData.matchedSkills || [],
-
-                missingSkills:
-                    analysisData.missingSkills || [],
-
-                additionalSkills:
-                    analysisData.additionalSkills || [],
-
-                recommendations:
-                    analysisData.recommendations || [],
-
-                jdProfile:
-                    analysisData.jdProfile || {}
-            });
+            analysisData.analysis || {};
 
 
         // =================================================
-        // POPULATED RESPONSE
+        // SAVE ANALYSIS
         // =================================================
 
-        const populatedAnalysis =
-            await ResumeAnalysis.findById(
+const savedAnalysis =
+    await ResumeAnalysis.create({
 
-                analysis._id
+        userId,
 
-            ).populate(
+        resumeId,
 
-                "resumeId",
+        targetRole:
+            jdProfile.role ||
+            resume.targetRole ||
+            "",
 
-                "resumeName targetRole originalFileName createdAt"
-            );
+        jobDescription,
+
+        // =================================================
+        // SCORES
+        // =================================================
+
+        semanticScore:
+            analysis.semanticScore || 0,
+
+        skillScore:
+            analysis.skillScore || 0,
+
+        finalScore:
+            analysis.finalScore || 0,
+
+        // =================================================
+        // SKILLS
+        // =================================================
+
+        matchedSkills:
+            analysis.matchedSkills || [],
+
+        missingSkills:
+            analysis.missingSkills || [],
+
+        additionalSkills:
+            analysis.additionalSkills || [],
+
+        // =================================================
+        // ELIGIBILITY
+        // =================================================
+
+        educationMatch:
+            analysis.educationMatch ?? true,
+
+        experienceMatch:
+            analysis.experienceMatch ?? true,
+
+        eligibilityWarnings:
+            analysis.eligibilityWarnings || [],
+
+        // =================================================
+        // JD PROFILE
+        // =================================================
+
+        jdProfile,
 
 
         
+    });
+
+
+        // =================================================
+        // POPULATE RESUME
+        // =================================================
+
+        const populatedAnalysis =
+            await ResumeAnalysis
+                .findById(
+                    savedAnalysis._id
+                )
+                .populate(
+                    "resumeId",
+                    "resumeName targetRole originalFileName createdAt"
+                );
 
 
         return populatedAnalysis;
 
-    } catch(error) {
 
-    
+    } catch (error) {
 
         throw new Error(
 
             error.message ||
-
             "Resume analysis failed"
         );
     }
 };
 
 
-
 // =========================================================
 // GET ALL USER ANALYSES
 // =========================================================
 
-export const getUserAnalysesService = async (userId) => {
+export const getUserAnalysesService = async (
+    userId
+) => {
 
     try {
 
@@ -167,36 +226,28 @@ export const getUserAnalysesService = async (userId) => {
             await ResumeAnalysis.find({
 
                 userId
+
             })
-
             .populate(
-
                 "resumeId",
-
                 "resumeName targetRole originalFileName createdAt"
             )
-
             .sort({
-
                 createdAt: -1
             });
 
 
         return analyses;
 
-    } catch(error) {
-
-       
+    } catch (error) {
 
         throw new Error(
 
             error.message ||
-
             "Failed to fetch analyses"
         );
     }
 };
-
 
 
 // =========================================================
@@ -204,10 +255,8 @@ export const getUserAnalysesService = async (userId) => {
 // =========================================================
 
 export const getAnalysisByIdService = async ({
-
     analysisId,
     userId
-
 }) => {
 
     try {
@@ -219,29 +268,23 @@ export const getAnalysisByIdService = async ({
 
                 userId
             })
-
             .populate(
-
                 "resumeId",
-
                 "resumeName targetRole originalFileName createdAt"
             );
 
 
         return analysis;
 
-    } catch(error) {
-
+    } catch (error) {
 
         throw new Error(
 
             error.message ||
-
             "Failed to fetch analysis"
         );
     }
 };
-
 
 
 // =========================================================
@@ -249,10 +292,8 @@ export const getAnalysisByIdService = async ({
 // =========================================================
 
 export const getResumeAnalysesService = async ({
-
     resumeId,
     userId
-
 }) => {
 
     try {
@@ -263,28 +304,28 @@ export const getResumeAnalysesService = async ({
                 resumeId,
 
                 userId
+
             })
-
+            .populate(
+                "resumeId",
+                "resumeName targetRole originalFileName createdAt"
+            )
             .sort({
-
                 createdAt: -1
             });
 
 
         return analyses;
 
-    } catch(error) {
-
+    } catch (error) {
 
         throw new Error(
 
             error.message ||
-
             "Failed to fetch resume analyses"
         );
     }
 };
-
 
 
 // =========================================================
@@ -292,10 +333,8 @@ export const getResumeAnalysesService = async ({
 // =========================================================
 
 export const deleteAnalysisService = async ({
-
     analysisId,
     userId
-
 }) => {
 
     try {
@@ -311,12 +350,11 @@ export const deleteAnalysisService = async ({
 
         return deletedAnalysis;
 
-    } catch(error) {
+    } catch (error) {
 
-       throw new Error(
+        throw new Error(
 
             error.message ||
-
             "Failed to delete analysis"
         );
     }

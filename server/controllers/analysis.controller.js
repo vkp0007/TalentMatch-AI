@@ -7,23 +7,17 @@ import {
 } from "../services/analysis.service.js";
 
 
-
 // =========================================================
-// ANALYZE RESUME
+// ANALYZE RESUME AGAINST JOB
 // =========================================================
 
 export const analyzeResume = async (req, res) => {
 
     try {
 
-        // =================================================
-        // REQUEST DATA
-        // =================================================
-
-        let {
+        const {
             resumeId,
-            jobDescription,
-            targetRole = ""
+            jobDescription
         } = req.body;
 
 
@@ -37,14 +31,14 @@ export const analyzeResume = async (req, res) => {
 
                 success: false,
 
-                message: "Resume ID is required"
+                message:
+                    "Resume ID is required"
             });
         }
 
 
         if (
-            !jobDescription
-            ||
+            !jobDescription ||
             !jobDescription.trim()
         ) {
 
@@ -52,49 +46,37 @@ export const analyzeResume = async (req, res) => {
 
                 success: false,
 
-                message: "Job description is required"
+                message:
+                    "Job description is required"
             });
         }
 
 
         // =================================================
-        // CLEAN INPUT
+        // JD LENGTH LIMIT
         // =================================================
 
-        jobDescription = jobDescription.trim();
-
-        targetRole = targetRole?.trim?.() || "";
-
-
-        // =================================================
-        // TOKEN SAFETY
-        // =================================================
-
-        if (jobDescription.length > 15000) {
-
-            jobDescription = jobDescription.slice(
-                0,
-                15000
-            );
-        }
-
-
-        // =================================================
-        // SERVICE CALL
-        // =================================================
-
-        const result = await analyzeResumeService({
-
-            userId: req.user._id,
-
-            resumeId,
-
-            targetRole,
-
+        const cleanedJobDescription =
             jobDescription
-        });
+                .trim()
+                .slice(0, 15000);
 
 
+        // =================================================
+        // ANALYSIS SERVICE
+        // =================================================
+
+        const result =
+            await analyzeResumeService({
+
+                userId:
+                    req.user._id,
+
+                resumeId,
+
+                jobDescription:
+                    cleanedJobDescription
+            });
 
 
         // =================================================
@@ -105,13 +87,16 @@ export const analyzeResume = async (req, res) => {
 
             success: true,
 
-            message: "Resume analyzed successfully",
+            message:
+                "Resume analyzed successfully",
 
             data: result
         });
 
+
     } catch (error) {
-  return res.status(500).json({
+
+        return res.status(500).json({
 
             success: false,
 
@@ -121,7 +106,6 @@ export const analyzeResume = async (req, res) => {
         });
     }
 };
-
 
 
 // =========================================================
@@ -137,16 +121,20 @@ export const getUserAnalyses = async (req, res) => {
                 req.user._id
             );
 
+
         return res.status(200).json({
 
             success: true,
 
-            count: analyses.length,
+            count:
+                analyses.length,
 
             analyses
         });
 
+
     } catch (error) {
+
         return res.status(500).json({
 
             success: false,
@@ -157,7 +145,6 @@ export const getUserAnalyses = async (req, res) => {
         });
     }
 };
-
 
 
 // =========================================================
@@ -172,12 +159,15 @@ export const getAnalysisById = async (req, res) => {
             id
         } = req.params;
 
+
         const analysis =
             await getAnalysisByIdService({
 
-                analysisId: id,
+                analysisId:
+                    id,
 
-                userId: req.user._id
+                userId:
+                    req.user._id
             });
 
 
@@ -187,9 +177,11 @@ export const getAnalysisById = async (req, res) => {
 
                 success: false,
 
-                message: "Analysis not found"
+                message:
+                    "Analysis not found"
             });
         }
+
 
         return res.status(200).json({
 
@@ -197,6 +189,7 @@ export const getAnalysisById = async (req, res) => {
 
             analysis
         });
+
 
     } catch (error) {
 
@@ -212,7 +205,6 @@ export const getAnalysisById = async (req, res) => {
 };
 
 
-
 // =========================================================
 // GET ANALYSES FOR SINGLE RESUME
 // =========================================================
@@ -225,22 +217,27 @@ export const getResumeAnalyses = async (req, res) => {
             resumeId
         } = req.params;
 
+
         const analyses =
             await getResumeAnalysesService({
 
                 resumeId,
 
-                userId: req.user._id
+                userId:
+                    req.user._id
             });
+
 
         return res.status(200).json({
 
             success: true,
 
-            count: analyses.length,
+            count:
+                analyses.length,
 
             analyses
         });
+
 
     } catch (error) {
 
@@ -256,7 +253,6 @@ export const getResumeAnalyses = async (req, res) => {
 };
 
 
-
 // =========================================================
 // DELETE ANALYSIS
 // =========================================================
@@ -269,13 +265,17 @@ export const deleteAnalysis = async (req, res) => {
             id
         } = req.params;
 
+
         const deletedAnalysis =
             await deleteAnalysisService({
 
-                analysisId: id,
+                analysisId:
+                    id,
 
-                userId: req.user._id
+                userId:
+                    req.user._id
             });
+
 
         if (!deletedAnalysis) {
 
@@ -283,9 +283,11 @@ export const deleteAnalysis = async (req, res) => {
 
                 success: false,
 
-                message: "Analysis not found"
+                message:
+                    "Analysis not found"
             });
         }
+
 
         return res.status(200).json({
 
@@ -294,6 +296,7 @@ export const deleteAnalysis = async (req, res) => {
             message:
                 "Analysis deleted successfully"
         });
+
 
     } catch (error) {
 

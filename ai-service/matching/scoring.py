@@ -1,40 +1,25 @@
 def calculate_final_score(
-
     semantic_score,
-
     skill_score,
-
     matched_skills=None,
-
     missing_skills=None
 ):
 
-    # =====================================================
-    # DEFAULTS
-    # =====================================================
+    matched_skills = matched_skills or []
 
-    matched_skills = (
-        matched_skills or []
-    )
-
-    missing_skills = (
-        missing_skills or []
-    )
+    missing_skills = missing_skills or []
 
 
     # =====================================================
-    # BASE WEIGHTED SCORE
+    # BASE SCORE
     # =====================================================
 
-    # ATS priority:
-    # skills > semantic similarity
+    # Skill alignment is more important than
+    # semantic similarity.
 
-    weighted_score = (
-
+    score = (
         0.65 * skill_score
-
         +
-
         0.35 * semantic_score
     )
 
@@ -43,59 +28,49 @@ def calculate_final_score(
     # MISSING SKILL PENALTY
     # =====================================================
 
-    # penalize missing skills
-    # but avoid over-penalizing
+    # Avoid over-penalizing candidates.
 
     missing_penalty = min(
-
-        len(missing_skills) * 2,
-
-        15
+        len(missing_skills) * 1.5,
+        10
     )
 
-
-    weighted_score -= (
-        missing_penalty
-    )
+    score -= missing_penalty
 
 
     # =====================================================
     # MATCH BONUS
     # =====================================================
 
-    # reward strong alignment
-
     if len(matched_skills) >= 8:
 
-        weighted_score += 5
+        score += 5
 
     elif len(matched_skills) >= 5:
 
-        weighted_score += 3
+        score += 3
 
 
-    # =====================================================
-    # HIGH SEMANTIC BONUS
-    # =====================================================
+        # =====================================================
+        # SEMANTIC BONUS
+        # =====================================================
 
     if semantic_score >= 85:
 
-        weighted_score += 3
+        score += 3
 
 
-    # =====================================================
-    # NORMALIZE SCORE
-    # =====================================================
+            # =====================================================
+            # NORMALIZE
+            # =====================================================
 
-    weighted_score = max(
-        0,
-        min(weighted_score, 100)
+    score = max(
+            0,
+            min(score, 100)
     )
 
 
     return round(
-
-        weighted_score,
-
+        score,
         2
     )

@@ -4,9 +4,7 @@ from fastapi.middleware.cors import (
     CORSMiddleware
 )
 
-from ai_routes import (
-    router as ai_router
-)
+from routes.ai_routes import router
 
 
 app = FastAPI()
@@ -27,15 +25,16 @@ app.add_middleware(
 )
 
 
-# routes
-app.include_router(ai_router)
+app.include_router(
+    router,
+    prefix="/api/ai"
+)
 
 
 @app.get("/")
-def home():
+def health_check():
 
     return {
-
-        "message":
-        "AI Service Running"
+        "status": "ok",
+        "service": "TalentMatch AI Service"
     }

@@ -12,12 +12,12 @@ import {
     deleteAnalysis
 } from "../controllers/analysis.controller.js";
 
+
 const router = express.Router();
 
 
-
 // =========================================================
-// ANALYZE RESUME
+// ANALYZE RESUME AGAINST JOB
 // =========================================================
 
 router.post(
@@ -25,7 +25,6 @@ router.post(
     protect,
     analyzeResume
 );
-
 
 
 // =========================================================
@@ -39,6 +38,16 @@ router.get(
 );
 
 
+// =========================================================
+// GET ANALYSES FOR SINGLE RESUME
+// =========================================================
+
+router.get(
+    "/resume/:resumeId",
+    protect,
+    getResumeAnalyses
+);
+
 
 // =========================================================
 // GET SINGLE ANALYSIS
@@ -51,19 +60,6 @@ router.get(
 );
 
 
-
-// =========================================================
-// GET ANALYSES FOR A RESUME
-// =========================================================
-
-router.get(
-    "/resume/:resumeId",
-    protect,
-    getResumeAnalyses
-);
-
-
-
 // =========================================================
 // DELETE ANALYSIS
 // =========================================================
@@ -73,7 +69,6 @@ router.delete(
     protect,
     deleteAnalysis
 );
-
 
 
 export default router;

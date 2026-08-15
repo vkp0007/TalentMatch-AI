@@ -1,396 +1,254 @@
-import os
-
 import json
-
+import logging
 import re
 
-import logging
+from llm.client import generate_completion
 
-from groq import Groq
+from extraction.prompts import RESUME_EXTRACTION_PROMPT
 
-from dotenv import load_dotenv
+from utils.json_cleaner import clean_json_response
 
-from extraction.prompts import (
-    RESUME_EXTRACTION_PROMPT
-)
+from utils.skill_normalizer import normalize_skill_name
 
-from utils.skill_normalizer import (
-    normalize_skill_name
-)
-
-
-# =========================================================
-# ENV
-# =========================================================
-
-load_dotenv()
-
-
-# =========================================================
-# LOGGER
-# =========================================================
-
-logging.basicConfig(
-    level=logging.INFO
-)
 
 logger = logging.getLogger(__name__)
 
-
-# =========================================================
-# GROQ CLIENT
-# =========================================================
-
-client = Groq(
-
-    api_key=os.getenv(
-        "GROQ_API_KEY"
-    )
-)
-
-
-MODEL_NAME = (
-    "llama-3.3-70b-versatile"
-)
-
-
-
-# =========================================================
-# CLEAN JSON RESPONSE
-# =========================================================
-
-def clean_json_response(text):
-
-    text = text.strip()
-
-
-    # remove markdown blocks
-    text = re.sub(
-
-        r"```json|```",
-
-        "",
-
-        text
-    )
-
-
-    # remove trailing commas
-    text = re.sub(
-
-        r",\s*}",
-
-        "}",
-
-        text
-    )
-
-    text = re.sub(
-
-        r",\s*]",
-
-        "]",
-
-        text
-    )
-
-
-    return text.strip()
-
-
-
-# =========================================================
-# NORMALIZE SKILLS
-# =========================================================
 
 def normalize_skills(skills):
 
     normalized = set()
 
+    if not isinstance(skills, list):
+        return []
 
     for skill in skills:
 
         if skill:
-
             normalized.add(
-
                 normalize_skill_name(
-                    skill
+                    str(skill)
                 )
             )
 
+    return sorted(normalized)
 
-    return sorted(
-        list(normalized)
+
+def clean_contact_value(value):
+
+    if not value:
+        return ""
+
+    value = str(value).strip()
+
+    # Extract plain email from Markdown/mailto format
+    email_match = re.search(
+        r'[\w.+-]+@[\w.-]+\.\w+',
+        value
     )
 
+    if email_match:
+        return email_match.group(0)
 
+    return value
 
-# =========================================================
-# CLEAN RESUME DATA
-# =========================================================
 
 def clean_resume_data(data):
 
+    if not isinstance(data, dict):
+        return empty_resume_response()
+
     # =====================================================
-    # TECHNICAL SKILLS
+    # CANDIDATE INFORMATION
     # =====================================================
 
-    data["technicalSkills"] = (
-        normalize_skills(
+    candidate_info = data.get(
+        "candidateInfo",
+        {}
+    )
 
-            data.get(
-                "technicalSkills",
-                []
-            )
+    if not isinstance(candidate_info, dict):
+        candidate_info = {}
+
+
+    email = str(
+        candidate_info.get(
+            "email",
+            ""
         )
     )
 
+    email_match = re.search(
+        r'[\w.+-]+@[\w.-]+\.\w+',
+        email
+    )
 
-    # =====================================================
-    # TOOLS
-    # =====================================================
-
-    data["tools"] = (
-        normalize_skills(
-
-            data.get(
-                "tools",
-                []
-            )
-        )
+    candidate_info["email"] = (
+        email_match.group(0)
+        if email_match
+        else ""
     )
 
 
-    # =====================================================
-    # PROJECT TECHNOLOGIES
-    # =====================================================
+    data["candidateInfo"] = candidate_info
+        # =====================================================
+        # TECHNICAL SKILLS
+        # =====================================================
+
+    data["technicalSkills"] = normalize_skills(
+        data.get("technicalSkills", [])
+    )
+
+        # =====================================================
+        # TOOLS
+        # =====================================================
+
+    data["tools"] = normalize_skills(
+        data.get("tools", [])
+    )
+
+        # =====================================================
+        # PROJECTS
+        # =====================================================
 
     projects = data.get(
         "projects",
         []
     )
 
+    if not isinstance(projects, list):
+        projects = []
 
     cleaned_projects = []
 
-
     for project in projects:
 
-        project["technologies"] = (
-            normalize_skills(
+        if not isinstance(project, dict):
+            continue
 
-                project.get(
-                    "technologies",
-                    []
-                )
-            )
+        project["technologies"] = normalize_skills(
+            project.get("technologies", [])
         )
 
-        cleaned_projects.append(
-            project
-        )
+        cleaned_projects.append(project)
 
+    data["projects"] = cleaned_projects
 
-    data["projects"] = (
-        cleaned_projects
-    )
+                # =====================================================
+                # ARRAY FIELDS
+                # =====================================================
 
+    for field in [
+        "experience",
+        "education",
+        "certifications",
+        "training",
+        "achievements"
+    ]:
+
+            if not isinstance(data.get(field), list):
+                data[field] = []
+
+                        # =====================================================
+                        # SUMMARY
+                        # =====================================================
+
+    if not isinstance(
+        data.get("candidateSummary"),
+        str
+    ):
+        data["candidateSummary"] = ""
 
     return data
 
 
-
-# =========================================================
-# EMPTY FALLBACK
-# =========================================================
-
 def empty_resume_response():
 
     return {
+    "candidateInfo": {
+        "name": "",
+        "email": "",
+        "phone": "",
+        "linkedin": "",
+        "github": ""
+    },
 
-        "candidateInfo": {
+    "technicalSkills": [],
 
-            "name": "",
+    "tools": [],
 
-            "email": "",
+    "experience": [],
 
-            "phone": "",
+    "projects": [],
 
-            "linkedin": "",
+    "education": [],
 
-            "github": ""
-        },
+    "certifications": [],
 
-        "technicalSkills": [],
+    "training": [],
 
-        "tools": [],
+    "achievements": [],
 
-        "experience": [],
-
-        "projects": [],
-
-        "education": [],
-
-        "certifications": [],
-
-        "candidateSummary": ""
+    "candidateSummary": ""
     }
 
 
-
-# =========================================================
-# EXTRACT STRUCTURED RESUME DATA
-# =========================================================
-
-def extract_resume_data(
-    resume_text
-):
+def extract_resume_data(resume_text):
 
     try:
-
-        # =================================================
-        # VALIDATION
-        # =================================================
 
         if not resume_text:
 
             logger.warning(
-                "Empty resume text received"
+                "Empty resume text received."
             )
 
             return empty_resume_response()
 
-
-        # =================================================
-        # TOKEN SAFETY
-        # =================================================
-
-        resume_text = (
-            resume_text[:12000]
-        )
-
-
-        # =================================================
-        # PROMPT
-        # =================================================
+        resume_text = resume_text[:12000]
 
         prompt = (
-
             RESUME_EXTRACTION_PROMPT
-
-            +
-
-            "\n\n"
-
-            +
-
-            resume_text
+            + "\n\n"
+            + resume_text
         )
 
-
-        # =================================================
-        # LLM CALL
-        # =================================================
-
-        completion = (
-
-            client.chat.completions.create(
-
-                model=MODEL_NAME,
-
-                messages=[
-
-                    {
-                        "role": "user",
-
-                        "content": prompt
-                    }
-                ],
-
-                temperature=0.1
-            )
+        response_text = generate_completion(
+            prompt=prompt,
+            temperature=0.1
         )
 
-
-        # =================================================
-        # RESPONSE
-        # =================================================
-
-        response_text = (
-
-            completion.choices[0]
-            .message.content
+        cleaned_text = clean_json_response(
+            response_text
         )
-
-
-        if not response_text:
-
-            logger.warning(
-                "Empty LLM response"
-            )
-
-            return empty_resume_response()
-
-
-        # =================================================
-        # CLEAN JSON
-        # =================================================
-
-        cleaned_text = (
-            clean_json_response(
-                response_text
-            )
-        )
-
 
         if not cleaned_text:
 
             logger.warning(
-                "Cleaned JSON response empty"
+                "Cleaned resume JSON response is empty."
             )
 
             return empty_resume_response()
-
-
-        # =================================================
-        # PARSE JSON
-        # =================================================
 
         parsed_json = json.loads(
             cleaned_text
         )
 
-
-        # =================================================
-        # CLEAN DATA
-        # =================================================
-
-        parsed_json = (
-            clean_resume_data(
-                parsed_json
-            )
+        return clean_resume_data(
+        parsed_json
         )
-
-
-        return parsed_json
-
 
     except json.JSONDecodeError as error:
 
         logger.error(
-
-            f"JSON Parsing Error: {str(error)}"
+            f"Resume JSON parsing error: {str(error)}"
         )
 
         return empty_resume_response()
 
-
     except Exception as error:
 
         logger.error(
-
-            f"Resume Extraction Error: {str(error)}"
+        f"Resume extraction error: {str(error)}"
         )
 
         return empty_resume_response()

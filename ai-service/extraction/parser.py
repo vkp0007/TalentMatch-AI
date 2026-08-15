@@ -1,77 +1,39 @@
 import os
-
 import re
-
 import logging
 
 import pdfplumber
-
-import fitz
+import pymupdf
 
 from docx import Document
 
 
-
-# =========================================================
-# LOGGER
-# =========================================================
-
-logging.basicConfig(
-    level=logging.INFO
-)
-
 logger = logging.getLogger(__name__)
 
 
-
-# =========================================================
-# SUPPORTED FILES
-# =========================================================
-
 SUPPORTED_EXTENSIONS = [
-
     ".pdf",
-
     ".docx"
 ]
 
 
-
-# =========================================================
-# CLEAN TEXT
-# =========================================================
-
 def clean_text(text):
 
     if not text:
-
         return ""
 
-
-    # remove extra spaces
     text = " ".join(
         text.split()
     )
 
-
-    # remove non-ascii artifacts
     text = re.sub(
-
         r"[\x00-\x1F\x7F]",
-
         " ",
-
         text
     )
 
-
     return text.strip()
 
-
-
-# =========================================================
-# PDF EXTRACTION
-# =========================================================
 
 def extract_pdf_text(file_path):
 
@@ -79,7 +41,7 @@ def extract_pdf_text(file_path):
 
 
     # =====================================================
-    # FIRST ATTEMPT: PDFPLUMBER
+    # PDFPLUMBER
     # =====================================================
 
     try:
@@ -100,76 +62,70 @@ def extract_pdf_text(file_path):
                         extracted + "\n"
                     )
 
-
     except Exception as error:
 
         logger.warning(
-
-            f"PDFPlumber Extraction Failed: {str(error)}"
+            f"PDFPlumber extraction failed: {str(error)}"
         )
 
 
-    # =====================================================
-    # FALLBACK: PYMUPDF
-    # =====================================================
+        # =====================================================
+        # PYMUPDF FALLBACK
+        # =====================================================
 
     if len(text.strip()) < 50:
 
-        try:
+            try:
 
-            doc = fitz.open(file_path)
+                doc = pymupdf.open(file_path)
 
-            for page in doc:
+                for page in doc:
 
-                extracted = (
-                    page.get_text()
-                )
-
-                if extracted:
-
-                    text += (
-                        extracted + "\n"
+                    extracted = (
+                        page.get_text()
                     )
 
-            doc.close()
+                    if extracted:
+
+                        text += (
+                            extracted + "\n"
+                        )
+
+                doc.close()
+
+            except Exception as error:
+
+                logger.warning(
+                    f"PyMuPDF extraction failed: {str(error)}"
+                )
 
 
-        except Exception as error:
+                # =====================================================
+                # CLEAN
+                # =====================================================
 
-            logger.warning(
-
-                f"PyMuPDF Extraction Failed: {str(error)}"
-            )
-
-
-    # =====================================================
-    # FINAL CLEANING
-    # =====================================================
-
-    text = clean_text(text)
+    text = clean_text(
+        text
+    )
 
 
-    # extraction validation
     if len(text) < 30:
 
         logger.warning(
-            "Low PDF extraction quality detected"
+        "Low PDF extraction quality detected."
         )
 
 
     return text
 
 
-
-# =========================================================
-# DOCX EXTRACTION
-# =========================================================
-
 def extract_docx_text(file_path):
 
     try:
 
-        doc = Document(file_path)
+        doc = Document(
+            file_path
+        )
 
 
         text = "\n".join(
@@ -181,18 +137,20 @@ def extract_docx_text(file_path):
                 for para in doc.paragraphs
 
                 if para.text.strip()
+
             ]
         )
 
 
-        text = clean_text(text)
+        text = clean_text(
+            text
+        )
 
 
-        # extraction validation
         if len(text) < 30:
 
             logger.warning(
-                "Low DOCX extraction quality detected"
+                "Low DOCX extraction quality detected."
             )
 
 
@@ -202,32 +160,23 @@ def extract_docx_text(file_path):
     except Exception as error:
 
         logger.error(
-
-            f"DOCX Extraction Error: {str(error)}"
+            f"DOCX extraction error: {str(error)}"
         )
 
         return ""
 
 
-
-# =========================================================
-# MAIN EXTRACTION FUNCTION
-# =========================================================
-
-def extract_resume_text(file_path):
+def extract_resume_text(
+    file_path
+):
 
     try:
-
-        # =================================================
-        # FILE VALIDATION
-        # =================================================
 
         if not os.path.exists(
             file_path
         ):
 
             logger.error(
-
                 f"File does not exist: {file_path}"
             )
 
@@ -239,47 +188,31 @@ def extract_resume_text(file_path):
         )[1].lower()
 
 
-        # =================================================
-        # UNSUPPORTED FILE
-        # =================================================
-
-        if extension not in (
-            SUPPORTED_EXTENSIONS
-        ):
+        if extension not in SUPPORTED_EXTENSIONS:
 
             logger.error(
-
                 f"Unsupported file format: {extension}"
             )
 
             return ""
 
 
-        # =================================================
-        # PDF
-        # =================================================
-
         if extension == ".pdf":
 
             return extract_pdf_text(
-                file_path
+             file_path
             )
 
 
-        # =================================================
-        # DOCX
-        # =================================================
-
         return extract_docx_text(
             file_path
-        )
+          )
 
 
     except Exception as error:
 
         logger.error(
-
-            f"Resume Extraction Error: {str(error)}"
+            f"Resume text extraction error: {str(error)}"
         )
 
         return ""

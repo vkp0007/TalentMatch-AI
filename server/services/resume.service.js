@@ -4,74 +4,142 @@ import { Resume }
 from "../models/resume.model.js";
 
 import {
-  extractResumeText
+    extractResume
 }
 from "./ai.service.js";
 
 
-const uploadResumeService =
-async ({
-
-  file,
-  userId,
-  resumeName,
-  targetRole
-
+export const uploadResumeService = async ({
+    file,
+    userId,
+    resumeName,
+    targetRole
 }) => {
 
-  if (!file) {
+    if (!file) {
 
-    throw new Error(
-      "No file uploaded"
-    );
-  }
-
-
-  const absolutePath =
-    path.resolve(file.path);
+        throw new Error(
+            "No file uploaded"
+        );
+    }
 
 
-  // FastAPI extraction
-  const extractedData =
-    await extractResumeText(
-      absolutePath
-    );
+    if (!resumeName?.trim()) {
+
+        throw new Error(
+            "Resume name is required"
+        );
+    }
 
 
-  // save resume
-  const resume =
-    await Resume.create({
+    // =================================================
+    // ABSOLUTE FILE PATH
+    // =================================================
 
-      userId,
-
-      resumeName,
-
-      targetRole,
-
-      originalFileName:
-        file.originalname,
-
-      fileUrl:
-        file.path.replace(
-          /\\\\/g,
-          "/"
-        ),
-
-      resumeText:
-        extractedData.extractedText || "",
-
-      parsedData:
-        extractedData.resumeData || {},
-
-      embedding:
-        extractedData.embedding || []
-    });
+    const absolutePath =
+        path.resolve(
+            file.path
+        );
 
 
-  return resume;
+    // =================================================
+    // PYTHON AI SERVICE
+    // =================================================
+
+    const extractedData =
+        await extractResume(
+            absolutePath
+        );
+
+
+    // =================================================
+    // VALIDATE AI RESPONSE
+    // =================================================
+
+    if (
+        !extractedData ||
+        !extractedData.success
+    ) {
+
+        throw new Error(
+            "Resume extraction failed"
+        );
+    }
+
+
+    // =================================================
+    // VALIDATE EMBEDDING
+    // =================================================
+
+    const embedding =
+        extractedData.embedding || [];
+
+
+    if (
+        embedding.length !== 384
+    ) {
+
+        throw new Error(
+            "Invalid resume embedding generated"
+        );
+    }
+
+
+    // =================================================
+    // SAVE RESUME
+    // =================================================
+
+    const resume =
+        await Resume.create({
+
+            userId,
+
+            resumeName:
+                resumeName.trim(),
+
+            targetRole:
+                targetRole?.trim() || "",
+
+            originalFileName:
+                file.originalname,
+
+            fileUrl:
+                file.path.replace(
+                    /\\/g,
+                    "/"
+                ),
+
+            resumeText:
+                extractedData.extractedText ||
+                "",
+
+            parsedData:
+                extractedData.resumeData ||
+                {},
+
+            embedding
+        });
+
+
+    return resume;
 };
 
+export const getResumeByIdService = async ({
+    resumeId,
+    userId
+}) => {
 
-export {
-  uploadResumeService
+    const resume =
+        await Resume.findOne({
+
+            _id: resumeId,
+
+            userId
+        })
+        .select(
+            "_id resumeName targetRole originalFileName fileUrl parsedData createdAt"
+        );
+
+
+    return resume;
 };

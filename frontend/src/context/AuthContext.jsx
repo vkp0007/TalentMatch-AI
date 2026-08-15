@@ -6,16 +6,12 @@ import {
 } from "react";
 
 import {
-
     getUserProfile
-
-} from "../api/authApi";
-
+} from "../api/auth.api.js";
 
 
 const AuthContext =
     createContext();
-
 
 
 // =====================================================
@@ -23,28 +19,19 @@ const AuthContext =
 // =====================================================
 
 export const AuthProvider = ({
-
     children
-
 }) => {
 
     const [
-
         user,
-
         setUser
-
     ] = useState(null);
 
 
     const [
-
         loading,
-
         setLoading
-
     ] = useState(true);
-
 
 
     // =================================================
@@ -54,9 +41,7 @@ export const AuthProvider = ({
     const login = (data) => {
 
         localStorage.setItem(
-
             "token",
-
             data.token
         );
 
@@ -64,7 +49,6 @@ export const AuthProvider = ({
             data.user
         );
     };
-
 
 
     // =================================================
@@ -77,58 +61,79 @@ export const AuthProvider = ({
             "token"
         );
 
+        localStorage.removeItem(
+            "user"
+        );
+
         setUser(null);
     };
-
 
 
     // =================================================
     // LOAD USER
     // =================================================
 
-    const loadUser =
-        async () => {
+const loadUser = async () => {
 
-            try {
+    try {
 
-                const token =
-                    localStorage.getItem(
-                        "token"
-                    );
-
-
-                if (!token) {
-
-                    setLoading(false);
-
-                    return;
-                }
+        const token =
+            localStorage.getItem(
+                "token"
+            );
 
 
-                const response =
-                    await getUserProfile();
+        if (!token) {
+
+            setLoading(false);
+
+            return;
+        }
 
 
-                setUser(
-                    response.user
-                );
+        const response =
+            await getUserProfile();
 
-            } catch (error) {
 
-                console.log(error);
+        const userData =
+            response?.data?.user;
 
-                localStorage.removeItem(
-                    "token"
-                );
 
-                setUser(null);
+        if (!userData) {
 
-            } finally {
+            throw new Error(
+                "Invalid user profile response"
+            );
+        }
 
-                setLoading(false);
-            }
-        };
 
+        setUser(
+            userData
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to load user:",
+            error
+        );
+
+        localStorage.removeItem(
+            "token"
+        );
+
+        localStorage.removeItem(
+            "user"
+        );
+
+        setUser(null);
+
+    } finally {
+
+        setLoading(false);
+    }
+};
 
 
     // =================================================
@@ -142,18 +147,17 @@ export const AuthProvider = ({
     }, []);
 
 
+    // =================================================
+    // CONTEXT
+    // =================================================
 
     return (
 
         <AuthContext.Provider
             value={{
-
                 user,
-
                 loading,
-
                 login,
-
                 logout
             }}
         >
@@ -163,7 +167,6 @@ export const AuthProvider = ({
         </AuthContext.Provider>
     );
 };
-
 
 
 // =====================================================

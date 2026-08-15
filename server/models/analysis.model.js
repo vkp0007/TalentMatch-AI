@@ -1,105 +1,109 @@
 import mongoose from "mongoose";
 
+const ResumeAnalysisSchema = new mongoose.Schema(
+    {
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true
+        },
 
-const ResumeAnalysisSchema = new mongoose.Schema({
+        resumeId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Resume",
+            required: true,
+            index: true
+        },
 
-    userId: {
+        targetRole: {
+            type: String,
+            default: ""
+        },
 
-        type: mongoose.Schema.Types.ObjectId,
+        jobDescription: {
+            type: String,
+            required: true
+        },
 
-        ref: "User",
+        // =================================================
+        // SCORES
+        // =================================================
 
-        required: true
+        semanticScore: {
+            type: Number,
+            default: 0
+        },
+
+        skillScore: {
+            type: Number,
+            default: 0
+        },
+
+        finalScore: {
+            type: Number,
+            default: 0
+        },
+
+        // =================================================
+        // SKILL ANALYSIS
+        // =================================================
+
+        matchedSkills: {
+            type: [String],
+            default: []
+        },
+
+        missingSkills: {
+            type: [String],
+            default: []
+        },
+
+        additionalSkills: {
+            type: [String],
+            default: []
+        },
+
+        // =================================================
+        // ELIGIBILITY
+        // =================================================
+
+        educationMatch: {
+            type: Boolean,
+            default: true
+        },
+
+        experienceMatch: {
+            type: Boolean,
+            default: true
+        },
+
+        eligibilityWarnings: {
+            type: [String],
+            default: []
+        },
+
+        // =================================================
+        // JOB DESCRIPTION PROFILE
+        // =================================================
+
+        jdProfile: {
+            type: mongoose.Schema.Types.Mixed,
+            default: {}
+        },
+
+        // =================================================
+        // LEGACY / UNUSED
+        // =================================================
+
+
     },
-
-    resumeId: {
-
-        type: mongoose.Schema.Types.ObjectId,
-
-        ref: "Resume",
-
-        required: true
-    },
-
-    targetRole: {
-
-        type: String,
-
-        default: ""
-    },
-
-    jobDescription: {
-
-        type: String,
-
-        required: true
-    },
-
-    semanticScore: {
-
-        type: Number,
-
-        default: 0
-    },
-
-    skillScore: {
-
-        type: Number,
-
-        default: 0
-    },
-
-    finalScore: {
-
-        type: Number,
-
-        default: 0
-    },
-
-    matchedSkills: {
-
-        type: [String],
-
-        default: []
-    },
-
-    missingSkills: {
-
-        type: [String],
-
-        default: []
-    },
-
-    additionalSkills: {
-
-        type: [String],
-
-        default: []
-    },
-
-    recommendations: {
-
-        type: [String],
-
-        default: []
-    },
-
-    jdProfile: {
-
-        type: Object,
-
-        default: {}
+    {
+        timestamps: true
     }
-
-}, {
-
-    timestamps: true
-});
-
+);
 
 export const ResumeAnalysis = mongoose.model(
-
     "ResumeAnalysis",
-
     ResumeAnalysisSchema
 );

@@ -1,63 +1,69 @@
 import axios from "axios";
 
-const AI_BASE_URL =
-  process.env.AI_SERVICE_URL;
+const AI_BASE_URL = process.env.AI_SERVICE_URL;
+
+console.log(
+    "AI_SERVICE_URL:",
+    JSON.stringify(AI_BASE_URL)
+);
 
 const apiClient = axios.create({
-
-  baseURL: AI_BASE_URL,
-
-  timeout: 30000
+    baseURL: AI_BASE_URL,
+    timeout: 30000
 });
 
 
-// extract text
-const extractResumeText =
-async (filePath) => {
+// =========================================================
+// RESUME EXTRACTION
+// =========================================================
 
-  const response =
-    await apiClient.post(
+const extractResume = async (
+    filePath
+) => {
 
-      "/extract-text",
+    const response =
+        await apiClient.post(
 
-      { filePath }
-    );
+            "/extract-resume",
 
-  return response.data;
+            {
+                filePath
+            }
+        );
+
+    return response.data;
 };
 
 
-// analyze resume
-const analyzeResumeAI =
-async ({
+// =========================================================
+// JOB ANALYSIS
+// =========================================================
 
-  resumeText,
-  parsedData,
-  embedding,
-  jobDescription
-
+const analyzeJobAI = async ({
+    resumeData,
+    resumeEmbedding,
+    jobDescription
 }) => {
 
-  const response =
-    await apiClient.post(
+    const response =
+        await apiClient.post(
 
-      "/analyze-resume",
+            "/analyze-job",
 
-      {
+            {
+                resumeData,
 
-        resumeText,
-        parsedData,
-        embedding,
-        jobDescription
-      }
-    );
+                resumeEmbedding,
 
-  return response.data;
+                jobDescription
+            }
+        );
+
+    return response.data;
 };
 
 
 export {
-
-  extractResumeText,
-  analyzeResumeAI
+    extractResume,
+    analyzeJobAI
 };

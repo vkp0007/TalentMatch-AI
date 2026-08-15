@@ -1,18 +1,14 @@
 import json
-
-import re
-
 import logging
+
+from llm.client import generate_completion
 
 from extraction.prompts import (
     JD_EXTRACTION_PROMPT
 )
 
-from extraction.llm_extractor import (
-
-    client,
-
-    MODEL_NAME
+from utils.json_cleaner import (
+    clean_json_response
 )
 
 from utils.skill_normalizer import (
@@ -24,12 +20,7 @@ from utils.skill_normalizer import (
 # LOGGER
 # =========================================================
 
-logging.basicConfig(
-    level=logging.INFO
-)
-
 logger = logging.getLogger(__name__)
-
 
 
 # =========================================================
@@ -46,58 +37,19 @@ def empty_jd_profile():
 
         "preferredSkills": [],
 
+        "educationRequirements": {
+
+            "required": [],
+
+            "preferred": []
+        },
+
         "experienceRequirements": "",
 
         "responsibilities": [],
 
         "domain": ""
-    }
-
-
-
-# =========================================================
-# CLEAN JSON RESPONSE
-# =========================================================
-
-def clean_json_response(text):
-
-    text = text.strip()
-
-
-    # remove markdown
-    text = re.sub(
-
-        r"```json|```",
-
-        "",
-
-        text
-    )
-
-
-    # remove trailing commas
-    text = re.sub(
-
-        r",\s*}",
-
-        "}",
-
-        text
-    )
-
-    text = re.sub(
-
-        r",\s*]",
-
-        "]",
-
-        text
-    )
-
-
-    return text.strip()
-
-
+     }
 
 # =========================================================
 # NORMALIZE SKILLS
@@ -108,6 +60,10 @@ def normalize_skills(skills):
     normalized = set()
 
 
+    if not isinstance(skills, list):
+        return []
+
+
     for skill in skills:
 
         if skill:
@@ -115,7 +71,7 @@ def normalize_skills(skills):
             normalized.add(
 
                 normalize_skill_name(
-                    skill
+                    str(skill)
                 )
             )
 
@@ -125,12 +81,29 @@ def normalize_skills(skills):
     )
 
 
+    # =========================================================
+    # CLEAN JD PROFILE
+    # =========================================================
+    
+def clean_jd_profile(
+    jd_profile
+):
 
-# =========================================================
-# CLEAN JD PROFILE
-# =========================================================
+    # =====================================================
+    # VALIDATE PROFILE
+    # =====================================================
 
-def clean_jd_profile(jd_profile):
+    if not isinstance(
+        jd_profile,
+        dict
+    ):
+
+        return empty_jd_profile()
+
+
+    # =====================================================
+    # REQUIRED SKILLS
+    # =====================================================
 
     jd_profile["requiredSkills"] = (
         normalize_skills(
@@ -143,6 +116,10 @@ def clean_jd_profile(jd_profile):
     )
 
 
+    # =====================================================
+    # PREFERRED SKILLS
+    # =====================================================
+
     jd_profile["preferredSkills"] = (
         normalize_skills(
 
@@ -154,7 +131,10 @@ def clean_jd_profile(jd_profile):
     )
 
 
-    # remove overlap
+    # =====================================================
+    # REMOVE SKILL OVERLAP
+    # =====================================================
+
     jd_profile["preferredSkills"] = [
 
         skill
@@ -169,15 +149,279 @@ def clean_jd_profile(jd_profile):
     ]
 
 
+    # =====================================================
+    # EDUCATION REQUIREMENTS
+    # =====================================================
+
+    education = jd_profile.get(
+        "educationRequirements",
+        {}
+    )
+
+
+    # Ensure education is an object
+
+    if not isinstance(
+        education,
+        dict
+    ):
+
+        education = {}
+
+
+        # =====================================================
+        # REQUIRED EDUCATION
+        # =====================================================
+
+    required_education = (
+        education.get(
+            "required",
+                []
+        )
+    )
+
+
+        # =====================================================
+        # PREFERRED EDUCATION
+        # =====================================================
+
+    preferred_education = (
+        education.get(
+            "preferred",
+                []
+        )
+    )
+
+
+        # =====================================================
+        # NORMALIZE REQUIRED EDUCATION
+        # =====================================================
+
+    if isinstance(
+        required_education,
+        str
+    ):
+
+            required_education = [
+                required_education
+            ]
+
+    elif not isinstance(
+        required_education,
+        list
+    ):
+
+        required_education = []
+
+
+            # =====================================================
+            # NORMALIZE PREFERRED EDUCATION
+            # =====================================================
+
+    if isinstance(
+        preferred_education,
+        str
+    ):
+
+            preferred_education = [
+                preferred_education
+            ]
+
+    elif not isinstance(
+        preferred_education,
+        list
+    ):
+
+            preferred_education = []
+
+
+                # =====================================================
+                # CLEAN REQUIRED EDUCATION
+                # =====================================================
+
+    required_education = [
+
+        str(requirement).strip()
+
+        for requirement
+        in required_education
+
+        if str(requirement).strip()
+    ]
+
+
+                # =====================================================
+                # CLEAN PREFERRED EDUCATION
+                # =====================================================
+
+    preferred_education = [
+
+        str(requirement).strip()
+
+        for requirement
+        in preferred_education
+
+        if str(requirement).strip()
+    ]
+
+
+                # =====================================================
+                # REMOVE DUPLICATE EDUCATION
+                # =====================================================
+
+    required_education = list(
+        dict.fromkeys(
+            required_education
+        )
+    )
+
+
+    preferred_education = [
+
+        requirement
+
+        for requirement
+        in dict.fromkeys(
+            preferred_education
+        )
+
+        if requirement not in required_education
+    ]
+
+
+                # =====================================================
+                # SET EDUCATION REQUIREMENTS
+                # =====================================================
+
+    jd_profile[
+        "educationRequirements"
+    ] = {
+
+            "required":
+                required_education,
+
+            "preferred":
+                preferred_education
+    }
+
+
+                        # =====================================================
+                        # EXPERIENCE REQUIREMENTS
+                        # =====================================================
+
+    experience = jd_profile.get(
+        "experienceRequirements",
+        ""
+    )
+
+
+    if experience is None:
+
+       experience = ""
+
+
+    jd_profile[
+        "experienceRequirements"
+    ] = str(
+        experience
+    ).strip()
+
+
+                            # =====================================================
+                            # RESPONSIBILITIES
+                            # =====================================================
+
+    responsibilities = jd_profile.get(
+        "responsibilities",
+        []
+    )
+
+
+    if isinstance(
+        responsibilities,
+        str
+    ):
+
+        responsibilities = [
+            responsibilities
+        ]
+
+    elif not isinstance(
+            responsibilities,
+            list
+    ):
+
+        responsibilities = []
+
+
+    jd_profile[
+        "responsibilities"
+    ] = [
+
+        str(responsibility).strip()
+
+        for responsibility
+        in responsibilities
+
+        if str(responsibility).strip()
+    ]
+
+
+                                # =====================================================
+                                # ROLE
+                                # =====================================================
+
+    role = jd_profile.get(
+        "role",
+        ""
+    )
+
+
+    if role is None:
+
+        role = ""
+
+
+    jd_profile[
+        "role"
+    ] = str(
+        role
+    ).strip()
+
+
+                                    # =====================================================
+                                    # DOMAIN
+                                    # =====================================================
+
+    domain = jd_profile.get(
+        "domain",
+        ""
+    )
+
+
+    if domain is None:
+
+        domain = ""
+
+
+    jd_profile[
+        "domain"
+    ] = str(
+        domain
+    ).strip()
+
+
     return jd_profile
 
 
 
-# =========================================================
-# EXTRACT JD DATA
-# =========================================================
+        # =========================================================
+        # EXTRACT JD DATA
+        # =========================================================
 
-def extract_jd_data(job_description):
+def extract_jd_data(
+    job_description
+):
 
     try:
 
@@ -188,7 +432,7 @@ def extract_jd_data(job_description):
         if not job_description:
 
             logger.warning(
-                "Empty job description received"
+                "Empty job description received."
             )
 
             return empty_jd_profile()
@@ -225,48 +469,16 @@ def extract_jd_data(job_description):
         # LLM CALL
         # =================================================
 
-        completion = (
+        response_text = generate_completion(
 
-            client.chat.completions.create(
+            prompt=prompt,
 
-                model=MODEL_NAME,
-
-                messages=[
-
-                    {
-                        "role": "user",
-
-                        "content": prompt
-                    }
-                ],
-
-                temperature=0.1
-            )
+            temperature=0.1
         )
 
 
         # =================================================
-        # RESPONSE
-        # =================================================
-
-        response_text = (
-
-            completion.choices[0]
-            .message.content
-        )
-
-
-        if not response_text:
-
-            logger.warning(
-                "Empty LLM JD extraction response"
-            )
-
-            return empty_jd_profile()
-
-
-        # =================================================
-        # CLEAN JSON
+        # CLEAN RESPONSE
         # =================================================
 
         cleaned_text = (
@@ -279,7 +491,7 @@ def extract_jd_data(job_description):
         if not cleaned_text:
 
             logger.warning(
-                "Cleaned JD JSON response empty"
+                "Cleaned JD JSON response is empty."
             )
 
             return empty_jd_profile()
@@ -298,21 +510,15 @@ def extract_jd_data(job_description):
         # CLEAN PROFILE
         # =================================================
 
-        parsed_json = (
-            clean_jd_profile(
-                parsed_json
-            )
+        return clean_jd_profile(
+        parsed_json
         )
-
-
-        return parsed_json
 
 
     except json.JSONDecodeError as error:
 
         logger.error(
-
-            f"JD JSON Parsing Error: {str(error)}"
+            f"JD JSON parsing error: {str(error)}"
         )
 
         return empty_jd_profile()
@@ -321,8 +527,7 @@ def extract_jd_data(job_description):
     except Exception as error:
 
         logger.error(
-
-            f"JD Extraction Error: {str(error)}"
+        f"JD extraction error: {str(error)}"
         )
 
         return empty_jd_profile()

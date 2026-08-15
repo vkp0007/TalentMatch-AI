@@ -1,48 +1,20 @@
-import { Navigate } from "react-router";
+import { Navigate, Outlet } from "react-router";
 
-import { useAuth } from "../context/AuthContext";
+const ProtectedRoute = () => {
 
+    const token =
+        localStorage.getItem("token");
 
-const ProtectedRoute = ({ children }) => {
-
-    const {
-        user,
-        loading
-    } = useAuth();
-
-
-    // =============================================
-    // LOADING
-    // =============================================
-
-    if (loading) {
-
+    if (!token) {
         return (
-
-            <div className="min-h-screen flex items-center justify-center">
-
-                Loading...
-
-            </div>
+            <Navigate
+                to="/login"
+                replace
+            />
         );
     }
 
-
-    // =============================================
-    // NOT AUTHENTICATED
-    // =============================================
-
-    if (!user) {
-
-        return <Navigate to="/login" replace />;
-    }
-
-
-    // =============================================
-    // AUTHORIZED
-    // =============================================
-
-    return children;
+    return <Outlet />;
 };
 
 export default ProtectedRoute;

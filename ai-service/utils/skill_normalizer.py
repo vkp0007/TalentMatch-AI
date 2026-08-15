@@ -12,12 +12,12 @@ NORMALIZED_SKILLS = {
     "mongo db": "mongodb",
 
     "tailwind": "tailwind css",
+    "tailwindcss": "tailwind css",
 
     "rest api": "restful apis",
     "rest apis": "restful apis",
 
     "machine-learning": "machine learning",
-
     "deep-learning": "deep learning",
 
     "nlp": "natural language processing"

@@ -1,510 +1,261 @@
 import logging
 
-from models.embedding_model import (
-    get_embedding_model
-)
+from sklearn.metrics.pairwise import cosine_similarity
 
-from sklearn.metrics.pairwise import (
-    cosine_similarity
-)
+from models.embedding_model import get_embedding_model
+from utils.skill_normalizer import normalize_skill_name
 
-from utils.skill_aliases import (
-    SKILL_ALIASES
-)
-
-from utils.skill_normalizer import (
-    normalize_skill_name
-)
-
-
-
-
-# =========================================================
-# LOGGER
-# =========================================================
-
-logging.basicConfig(
-    level=logging.INFO
-)
 
 logger = logging.getLogger(__name__)
 
 
-# =========================================================
-# NORMALIZE SKILLS
-# =========================================================
+SEMANTIC_THRESHOLD = 0.68
+
 
 def normalize_skills(skills):
-
-    normalized = set()
-
-
-    for skill in skills:
-
-        if skill:
-
-            normalized.add(
-
-                normalize_skill_name(
-                    skill
-                )
-            )
+    return sorted({
+        normalize_skill_name(str(skill))
+        for skill in (skills or [])
+        if skill
+    })
 
 
-    return sorted(
-        list(normalized)
-    )
-
-
-
-# =========================================================
-# EXPAND SKILLS USING ALIASES
-# =========================================================
-
-def expand_candidate_skills(skills):
-
-    expanded_skills = set()
-
-
-    for skill in skills:
-
-        normalized_skill = (
-            normalize_skill_name(
-                skill
-            )
-        )
-
-
-        expanded_skills.add(
-            normalized_skill
-        )
-
-
-        # alias expansion
-        if normalized_skill in SKILL_ALIASES:
-
-            for alias_skill in SKILL_ALIASES[
-                normalized_skill
-            ]:
-
-                expanded_skills.add(
-
-                    normalize_skill_name(
-                        alias_skill
-                    )
-                )
-
-
-    return sorted(
-        list(expanded_skills)
-    )
-
-
-
-# =========================================================
-# EXTRACT ALL CANDIDATE SKILLS
-# =========================================================
-
-def extract_candidate_skills(
-    candidate_profile
-):
-
+def extract_candidate_skills(candidate_profile):
     skills = set()
 
-
-    # =====================================================
-    # TECHNICAL SKILLS
-    # =====================================================
-
-    for skill in candidate_profile.get(
-        "technicalSkills",
-        []
-    ):
-
-        skills.add(
-
-            normalize_skill_name(
-                skill
-            )
-        )
-
-
-    # =====================================================
-    # TOOLS
-    # =====================================================
-
-    for tool in candidate_profile.get(
-        "tools",
-        []
-    ):
-
-        skills.add(
-
-            normalize_skill_name(
-                tool
-            )
-        )
-
-
-    # =====================================================
-    # PROJECT TECHNOLOGIES
-    # =====================================================
-
-    for project in candidate_profile.get(
-        "projects",
-        []
-    ):
-
-        for tech in project.get(
-            "technologies",
-            []
-        ):
-
-            skills.add(
-
-                normalize_skill_name(
-                    tech
-                )
-            )
-
-
-    # =====================================================
-    # EXPAND SKILLS
-    # =====================================================
-
-    expanded_skills = (
-        expand_candidate_skills(
-            list(skills)
+    skills.update(
+        normalize_skills(
+            candidate_profile.get("technicalSkills", [])
         )
     )
 
+    skills.update(
+        normalize_skills(
+            candidate_profile.get("tools", [])
+        )
+    )
 
-    return expanded_skills
+    for project in candidate_profile.get("projects", []):
+        skills.update(
+            normalize_skills(
+                project.get("technologies", [])
+            )
+        )
+
+    return sorted(skills)
 
 
-
-# =========================================================
-# SKILL MATCHING
-# =========================================================
-
-def compare_skills(
-
-    candidate_profile,
-
-    jd_profile,
-
-    threshold=0.55
+def semantic_match(
+    candidate_skills,
+    jd_skills,
+    threshold=SEMANTIC_THRESHOLD
 ):
+    if not candidate_skills or not jd_skills:
+        return {}, set()
 
-    # =====================================================
-    # CANDIDATE SKILLS
-    # =====================================================
+    model = get_embedding_model()
 
-    candidate_skills = (
-        extract_candidate_skills(
-            candidate_profile
-        )
+    candidate_embeddings = model.encode(candidate_skills)
+    jd_embeddings = model.encode(jd_skills)
+
+    similarities = cosine_similarity(
+        jd_embeddings,
+        candidate_embeddings
     )
 
+    matches = {}
+    used_candidates = set()
 
-    # =====================================================
-    # JD SKILLS
-    # =====================================================
+    for jd_index, jd_skill in enumerate(jd_skills):
 
-    required_skills = (
-        normalize_skills(
+        best_index = similarities[jd_index].argmax()
+        best_score = similarities[jd_index][best_index]
 
-            jd_profile.get(
-                "requiredSkills",
-                []
-            )
-        )
-    )
-
-
-    preferred_skills = (
-        normalize_skills(
-
-            jd_profile.get(
-                "preferredSkills",
-                []
-            )
-        )
-    )
-
-
-    # =====================================================
-    # COMBINE JD SKILLS
-    # =====================================================
-
-    all_jd_skills = sorted(
-
-        list(
-
-            set(
-
-                required_skills +
-
-                preferred_skills
-            )
-        )
-    )
-
-
-    matched_skills = []
-
-    missing_skills = []
-
-    additional_skills = []
-
-
-    # =====================================================
-    # EMPTY HANDLING
-    # =====================================================
-
-    if not candidate_skills:
-
-        logger.warning(
-            "No candidate skills found"
-        )
-
-        return {
-
-            "matchedSkills": [],
-
-            "missingSkills":
-                all_jd_skills,
-
-            "additionalSkills": [],
-
-            "skillScore": 0
-        }
-
-
-    if not all_jd_skills:
-
-        logger.warning(
-            "No JD skills found"
-        )
-
-        return {
-
-            "matchedSkills": [],
-
-            "missingSkills": [],
-
-            "additionalSkills":
-                candidate_skills,
-
-            "skillScore": 0
-        }
-
-
-    # =====================================================
-    # DIRECT MATCHES
-    # =====================================================
-
-    direct_matches = set(
-        candidate_skills
-    ).intersection(
-        set(all_jd_skills)
-    )
-
-
-    matched_skills.extend(
-        list(direct_matches)
-    )
-
-
-    remaining_jd_skills = [
-
-        skill
-
-        for skill in all_jd_skills
-
-        if skill not in direct_matches
-    ]
-
-
-    # =====================================================
-    # EMBEDDINGS
-    # =====================================================
-        # =====================================================
-    # EMBEDDINGS
-    # =====================================================
-
-    try:
-
-        model = (
-            get_embedding_model()
-        )
-
-        candidate_embeddings = (
-            model.encode(
-                candidate_skills
-            )
-        )
-
-        jd_embeddings = (
-            model.encode(
-                remaining_jd_skills
-            )
-        )
-
-    except Exception as error:
-
-        logger.error(
-
-            f"Skill Embedding Error: {str(error)}"
-        )
-
-        return {
-
-            "matchedSkills":
-                matched_skills,
-
-            "missingSkills":
-                remaining_jd_skills,
-
-            "additionalSkills":
-                candidate_skills,
-
-            "skillScore": 0
-        }
-
-
-    matched_candidate_skills = set()
-
-    # =====================================================
-    # SEMANTIC MATCHING
-    # =====================================================
-
-    for jd_index, jd_skill in enumerate(
-        remaining_jd_skills
-    ):
-
-        best_similarity = 0
-
-        best_candidate_skill = None
-
-
-        for candidate_index, candidate_skill in enumerate(
-            candidate_skills
-        ):
-
-            similarity = (
-                cosine_similarity(
-
-                    [jd_embeddings[jd_index]],
-
-                    [candidate_embeddings[candidate_index]]
-
-                )[0][0]
-            )
-
-
-            if similarity > best_similarity:
-
-                best_similarity = similarity
-
-                best_candidate_skill = (
-                    candidate_skill
-                )
-
-
-        # =================================================
-        # THRESHOLD MATCHING
-        # =================================================
-
-        if best_similarity >= threshold:
-
-            matched_skills.append(
-                jd_skill
-            )
-
-            matched_candidate_skills.add(
-                best_candidate_skill
-            )
-
-        else:
-
-            missing_skills.append(
-                jd_skill
-            )
-
-
-    # =====================================================
-    # ADDITIONAL SKILLS
-    # =====================================================
-
-    for skill in candidate_skills:
+        candidate_skill = candidate_skills[best_index]
 
         if (
-
-            skill not in matched_candidate_skills
-
-            and
-
-            skill not in matched_skills
+            best_score >= threshold
+            and candidate_skill not in used_candidates
         ):
+            matches[jd_skill] = candidate_skill
+            used_candidates.add(candidate_skill)
 
-            additional_skills.append(
-                skill
-            )
+    return matches, used_candidates
 
 
-    # =====================================================
-    # REMOVE DUPLICATES
-    # =====================================================
+def compare_skills(
+    candidate_profile,
+    jd_profile,
+    threshold=SEMANTIC_THRESHOLD
+):
 
-    matched_skills = sorted(
-        list(set(matched_skills))
+    candidate_skills = extract_candidate_skills(
+        candidate_profile
     )
 
-    missing_skills = sorted(
-        list(set(missing_skills))
+    required_skills = normalize_skills(
+        jd_profile.get("requiredSkills", [])
     )
 
-    additional_skills = sorted(
-        list(set(additional_skills))
+    preferred_skills = normalize_skills(
+        jd_profile.get("preferredSkills", [])
     )
 
+    # Prevent required/preferred duplication
+    preferred_skills = [
+        skill
+        for skill in preferred_skills
+        if skill not in required_skills
+    ]
 
-    # =====================================================
-    # SCORE CALCULATION
-    # =====================================================
-
-    total_jd_skills = len(
-        all_jd_skills
+    all_jd_skills = (
+        required_skills +
+        preferred_skills
     )
 
+    if not all_jd_skills:
+        return {
+            "matchedSkills": [],
+            "missingSkills": [],
+            "additionalSkills": candidate_skills,
+            "matchedRequiredSkills": [],
+            "matchedPreferredSkills": [],
+            "missingRequiredSkills": [],
+            "missingPreferredSkills": [],
+            "skillScore": 0
+      }
 
-    skill_score = round(
+# -----------------------------------------------------
+# EXACT MATCHING
+# -----------------------------------------------------
 
-        (
-            len(matched_skills)
-
-            /
-
-            total_jd_skills
-
-        ) * 100,
-
-        2
+    candidate_set = set(candidate_skills)
+    exact_matches = (
+    candidate_set.intersection(all_jd_skills)
     )
 
+    unmatched_jd = [
+    skill
+    for skill in all_jd_skills
+    if skill not in exact_matches
+    ]
+
+    matched_candidate_skills = set(exact_matches)
+
+# -----------------------------------------------------
+# SEMANTIC MATCHING
+# -----------------------------------------------------
+
+    semantic_matches, semantic_candidates = semantic_match(
+    [
+        skill
+        for skill in candidate_skills
+        if skill not in matched_candidate_skills
+    ],
+    unmatched_jd,
+    threshold
+   )
+
+    matched_candidate_skills.update(
+    semantic_candidates
+    )
+
+    matched_skills = (
+    exact_matches |
+    set(semantic_matches.keys())
+    )
+
+# -----------------------------------------------------
+# REQUIRED / PREFERRED
+# -----------------------------------------------------
+
+    matched_required = [
+    skill
+    for skill in required_skills
+    if skill in matched_skills
+    ]
+
+    matched_preferred = [
+    skill
+    for skill in preferred_skills
+    if skill in matched_skills
+    ]
+
+    missing_required = [
+    skill
+    for skill in required_skills
+    if skill not in matched_skills
+    ]
+
+    missing_preferred = [
+    skill
+    for skill in preferred_skills
+    if skill not in matched_skills
+    ]
+
+# -----------------------------------------------------
+# ADDITIONAL SKILLS
+# -----------------------------------------------------
+
+    additional_skills = [
+    skill
+    for skill in candidate_skills
+    if skill not in matched_candidate_skills
+    ]
+
+# -----------------------------------------------------
+# SCORE
+# -----------------------------------------------------
+
+    required_score = (
+        len(matched_required) /
+        len(required_skills) * 100
+        if required_skills
+        else 100
+    )
+
+    preferred_score = (
+       len(matched_preferred) /
+       len(preferred_skills) * 100
+       if preferred_skills
+       else 100
+    )
+
+    skill_score = (
+       0.80 * required_score +
+       0.20 * preferred_score
+   )
 
     return {
+       "matchedSkills": sorted(matched_skills),
 
-        "matchedSkills":
-            matched_skills,
+       "missingSkills": sorted(
+           missing_required +
+           missing_preferred
+        ),
 
-        "missingSkills":
-            missing_skills,
+       "additionalSkills": sorted(
+           additional_skills
+        ),
 
-        "additionalSkills":
-            additional_skills,
+       "matchedRequiredSkills": sorted(
+          matched_required
+        ),
 
-        "skillScore":
-            skill_score
+       "matchedPreferredSkills": sorted(
+          matched_preferred
+        ),
+
+       "missingRequiredSkills": sorted(
+          missing_required
+        ),
+
+       "missingPreferredSkills": sorted(
+          missing_preferred
+        ),
+
+      "skillScore": round(
+          skill_score,
+          2
+       )
     }
