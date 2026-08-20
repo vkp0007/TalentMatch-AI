@@ -1,44 +1,76 @@
 import apiClient from "./client";
 
 
-export const createInterviewChat = (
-    data
-) =>
-    apiClient.post(
+// =====================================================
+// CREATE CHAT
+// =====================================================
+
+export const createInterviewChat = ({
+    resumeId = null
+} = {}) => {
+
+    return apiClient.post(
         "/interview-chat",
-        data
+        {
+            resumeId
+        }
     );
+};
 
 
-export const getInterviewChats = () =>
-    apiClient.get(
+// =====================================================
+// GET RECENT CHATS
+// =====================================================
+
+export const getInterviewChats = () => {
+
+    return apiClient.get(
         "/interview-chat"
     );
+};
 
 
-export const getInterviewChat = (
-    chatId
-) =>
-    apiClient.get(
-        `/interview-chat/${chatId}`
-    );
-
+// =====================================================
+// SEND MESSAGE
+// =====================================================
 
 export const sendInterviewMessage = (
     chatId,
     message
-) =>
-    apiClient.post(
-        `/interview-chat/${chatId}/message`,
+) => {
+
+    return apiClient.post(
+        `/interview-chat/${chatId}/messages`,
         {
             message
         }
     );
+};
 
+
+// =====================================================
+// GET CHAT
+// =====================================================
+
+export const getInterviewChat = (
+    chatId
+) => {
+
+    return apiClient.get(
+        `/interview-chat/${chatId}`
+    );
+};
+
+
+// =====================================================
+// DELETE CHAT
+// =====================================================
 
 export const deleteInterviewChat = (
     chatId
-) =>
-    apiClient.delete(
+) => {
+
+    return apiClient.delete(
         `/interview-chat/${chatId}`
     );
+};

@@ -1,32 +1,30 @@
 import apiClient from "./client";
 
 
+// =====================================================
+// CREATE / GENERATE
+// =====================================================
+
 export const createRecommendation = (
-    data
+    analysisId
 ) =>
+
     apiClient.post(
         "/recommendations",
-        data
+        {
+            analysisId
+        }
     );
 
 
-export const getRecommendations = () =>
-    apiClient.get(
-        "/recommendations"
-    );
-
+// =====================================================
+// GET EXISTING
+// =====================================================
 
 export const getRecommendation = (
-    recommendationId
+    analysisId
 ) =>
+
     apiClient.get(
-        `/recommendations/${recommendationId}`
-    );
-
-
-export const deleteRecommendation = (
-    recommendationId
-) =>
-    apiClient.delete(
-        `/recommendations/${recommendationId}`
+        `/recommendations/${analysisId}`
     );

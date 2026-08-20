@@ -171,38 +171,65 @@ const recommendationData =
                 : [];
 
 
-        // =================================================
-        // SAVE
-        // =================================================
+// =================================================
+// SAVE
+// =================================================
 
-        const recommendation =
-            await Recommendation.create({
+try {
+
+    const recommendation =
+        await Recommendation.create({
+
+            userId,
+
+            analysisId:
+                analysis._id,
+
+            resumeId:
+                resume._id,
+
+            skillsToStudy,
+
+            resumeImprovements
+        });
+
+
+    return recommendation;
+
+
+} catch (error) {
+
+    if (error.code === 11000) {
+
+        const existingRecommendation =
+            await Recommendation.findOne({
 
                 userId,
 
                 analysisId:
-                    analysis._id,
-
-                resumeId:
-                    resume._id,
-
-                skillsToStudy,
-
-                resumeImprovements
+                    analysis._id
             });
 
 
-        return recommendation;
+        if (existingRecommendation) {
 
-
-    } catch (error) {
-
-        throw new Error(
-
-            error.message ||
-            "Failed to create recommendations"
-        );
+            return existingRecommendation;
+        }
     }
+
+
+    throw error;
+}
+
+
+} catch (error) {
+
+    throw new Error(
+
+        error.message ||
+        "Failed to create recommendations"
+    );
+}
 };
 
 

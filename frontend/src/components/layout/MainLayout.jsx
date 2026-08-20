@@ -1,35 +1,79 @@
 import {
+    useState
+} from "react";
+
+import {
     Outlet
 } from "react-router";
 
-import Sidebar from "./Sidebar";
-import Navbar from "./Navbar";
+import Sidebar
+    from "./Sidebar";
 
 
 const MainLayout = () => {
 
+    const [
+        sidebarOpen,
+        setSidebarOpen
+    ] = useState(true);
+
+
     return (
 
-        <div className="flex min-h-screen bg-gray-50">
+        <div className="
+            min-h-screen
+            bg-[#F7F3EA]
+        ">
 
-            <Sidebar />
+            {/* =================================================
+                FIXED SIDEBAR
+            ================================================= */}
+
+            <Sidebar
+                open={
+                    sidebarOpen
+                }
+                onToggle={() =>
+                    setSidebarOpen(
+                        current =>
+                            !current
+                    )
+                }
+            />
 
 
-            <div className="flex-1 flex flex-col">
+            {/* =================================================
+                MAIN CONTENT
+            ================================================= */}
 
-                <Navbar />
+            <main
+                className={`
+                    min-h-screen
+                    transition-all
+                    duration-200
+                    ${
+                        sidebarOpen
+                            ? "ml-64"
+                            : "ml-16"
+                    }
+                `}
+            >
 
-
-                <main className="flex-1 p-6">
+                <div className="
+                    min-h-screen
+                    px-5
+                    py-6
+                    sm:px-6
+                    lg:px-8
+                ">
 
                     <Outlet />
 
-                </main>
+                </div>
 
-            </div>
+            </main>
 
         </div>
-
     );
 };
 

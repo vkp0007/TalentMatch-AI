@@ -1,17 +1,13 @@
-import { Resume }
-from "../models/resume.model.js";
+import {
+    ApplicationEmail
+} from "../models/applicationEmail.model.js";
 
-import { ResumeAnalysis }
-from "../models/analysis.model.js";
-
-import { ApplicationEmail }
-from "../models/applicationEmail.model.js";
 
 import {
     generateApplicationEmail,
     refineApplicationEmail
-}
-from "./llm.service.js";
+} from "./llm.service.js";
+
 
 
 // =========================================================
@@ -20,8 +16,6 @@ from "./llm.service.js";
 
 export const createApplicationEmailService = async ({
     userId,
-    resumeId,
-    analysisId,
     role,
     jobUrl,
     userRequest
@@ -33,13 +27,6 @@ export const createApplicationEmailService = async ({
         // VALIDATION
         // =================================================
 
-        if (!resumeId) {
-
-            throw new Error(
-                "Resume ID is required"
-            );
-        }
-
         if (!role?.trim()) {
 
             throw new Error(
@@ -47,12 +34,14 @@ export const createApplicationEmailService = async ({
             );
         }
 
+
         if (!jobUrl?.trim()) {
 
             throw new Error(
                 "Job URL is required"
             );
         }
+
 
         if (!userRequest?.trim()) {
 
@@ -63,92 +52,11 @@ export const createApplicationEmailService = async ({
 
 
         // =================================================
-        // FIND RESUME
+        // GENERATE SUBJECT + EMAIL
         // =================================================
 
-        const resume =
-            await Resume.findOne({
-
-                _id: resumeId,
-
-                userId
-            });
-
-
-        if (!resume) {
-
-            throw new Error(
-                "Resume not found"
-            );
-        }
-
-
-        // =================================================
-        // VALIDATE RESUME DATA
-        // =================================================
-
-        if (
-            !resume.parsedData ||
-            Object.keys(
-                resume.parsedData
-            ).length === 0
-        ) {
-
-            throw new Error(
-                "Resume data not available"
-            );
-        }
-
-
-        // =================================================
-        // FIND ANALYSIS
-        // =================================================
-
-        let analysis = null;
-
-        if (analysisId) {
-
-            analysis =
-                await ResumeAnalysis.findOne({
-
-                    _id: analysisId,
-
-                    userId
-                });
-
-
-            if (!analysis) {
-
-                throw new Error(
-                    "Analysis not found"
-                );
-            }
-
-
-            if (
-                analysis.resumeId.toString() !==
-                resume._id.toString()
-            ) {
-
-                throw new Error(
-                    "Analysis does not belong to the selected resume"
-                );
-            }
-        }
-
-
-        // =================================================
-        // GENERATE EMAIL
-        // =================================================
-
-        const email =
+        const generatedEmail =
             await generateApplicationEmail({
-
-                candidateData:
-                    resume.parsedData,
-
-                jdProfile:
-                    analysis?.jdProfile || {},
 
                 role:
                     role.trim(),
@@ -161,7 +69,14 @@ export const createApplicationEmailService = async ({
             });
 
 
-        if (!email) {
+        // =================================================
+        // VALIDATE AI RESPONSE
+        // =================================================
+
+        if (
+            !generatedEmail ||
+            typeof generatedEmail !== "object"
+        ) {
 
             throw new Error(
                 "Failed to generate application email"
@@ -169,8 +84,32 @@ export const createApplicationEmailService = async ({
         }
 
 
+        const subject =
+            generatedEmail.subject?.trim();
+
+
+        const email =
+            generatedEmail.email?.trim();
+
+
+        if (!subject) {
+
+            throw new Error(
+                "AI failed to generate email subject"
+            );
+        }
+
+
+        if (!email) {
+
+            throw new Error(
+                "AI failed to generate application email"
+            );
+        }
+
+
         // =================================================
-        // SAVE EMAIL
+        // SAVE
         // =================================================
 
         const applicationEmail =
@@ -178,35 +117,20 @@ export const createApplicationEmailService = async ({
 
                 userId,
 
-                resumeId:
-
-                    resume._id,
-
-                analysisId:
-
-                    analysis?._id || null,
-
                 role:
-
                     role.trim(),
 
                 jobUrl:
-
                     jobUrl.trim(),
 
                 userRequest:
-
                     userRequest.trim(),
 
-                email:
+                subject,
 
-                    email.trim()
+                email
             });
 
-
-        // =================================================
-        // RETURN
-        // =================================================
 
         return applicationEmail;
 
@@ -221,273 +145,263 @@ export const createApplicationEmailService = async ({
     }
 };
 
+
+
 // =========================================================
 // GET ALL APPLICATION EMAILS
 // =========================================================
 
-export const getUserApplicationEmailsService = async (
-    userId
-) => {
+export const getUserApplicationEmailsService =
+    async (userId) => {
 
-    try {
+        try {
 
-        const emails =
-            await ApplicationEmail.find({
+            const emails =
+                await ApplicationEmail.find({
 
-                userId
+                    userId
 
-            })
-            .populate(
-                "resumeId",
-                "resumeName targetRole originalFileName createdAt"
-            )
-            .populate(
-                "analysisId",
-                "targetRole semanticScore skillScore finalScore"
-            )
-            .sort({
-                createdAt: -1
-            });
+                })
+                .sort({
+                    createdAt: -1
+                });
 
 
-        return emails;
+            return emails;
 
-    } catch (error) {
 
-        throw new Error(
+        } catch (error) {
 
-            error.message ||
-            "Failed to fetch application emails"
-        );
-    }
-};
+            throw new Error(
+
+                error.message ||
+                "Failed to fetch application emails"
+            );
+        }
+    };
+
 
 
 // =========================================================
 // GET SINGLE APPLICATION EMAIL
 // =========================================================
 
-export const getApplicationEmailByIdService = async ({
-    applicationEmailId,
-    userId
-}) => {
+export const getApplicationEmailByIdService =
+    async ({
+        applicationEmailId,
+        userId
+    }) => {
 
-    try {
+        try {
 
-        const email =
-            await ApplicationEmail.findOne({
+            const email =
+                await ApplicationEmail.findOne({
 
-                _id:
-                    applicationEmailId,
+                    _id:
+                        applicationEmailId,
 
-                userId
-            })
-            .populate(
-                "resumeId",
-                "resumeName targetRole originalFileName createdAt"
-            )
-            .populate(
-                "analysisId",
-                "targetRole semanticScore skillScore finalScore"
+                    userId
+                });
+
+
+            return email;
+
+
+        } catch (error) {
+
+            throw new Error(
+
+                error.message ||
+                "Failed to fetch application email"
             );
+        }
+    };
 
 
-        return email;
-
-    } catch (error) {
-
-        throw new Error(
-
-            error.message ||
-            "Failed to fetch application email"
-        );
-    }
-};
 
 // =========================================================
 // REFINE APPLICATION EMAIL
 // =========================================================
 
-export const refineApplicationEmailService = async ({
-    userId,
-    applicationEmailId,
-    userRequest
-}) => {
+export const refineApplicationEmailService =
+    async ({
+        userId,
+        applicationEmailId,
+        userRequest
+    }) => {
 
-    try {
+        try {
 
-        // =================================================
-        // VALIDATION
-        // =================================================
+            // =================================================
+            // VALIDATION
+            // =================================================
 
-        if (!applicationEmailId) {
+            if (!applicationEmailId) {
 
-            throw new Error(
-                "Application email ID is required"
-            );
-        }
-
-        if (!userRequest?.trim()) {
-
-            throw new Error(
-                "Please specify what you want changed"
-            );
-        }
+                throw new Error(
+                    "Application email ID is required"
+                );
+            }
 
 
-        // =================================================
-        // FIND EXISTING APPLICATION EMAIL
-        // =================================================
+            if (!userRequest?.trim()) {
 
-        const applicationEmail =
-            await ApplicationEmail.findOne({
-
-                _id:
-                    applicationEmailId,
-
-                userId
-            });
+                throw new Error(
+                    "Please specify what you want changed"
+                );
+            }
 
 
-        if (!applicationEmail) {
+            // =================================================
+            // FIND EXISTING EMAIL
+            // =================================================
 
-            throw new Error(
-                "Application email not found"
-            );
-        }
-
-
-        // =================================================
-        // FIND RESUME
-        // =================================================
-
-        const resume =
-            await Resume.findOne({
-
-                _id:
-                    applicationEmail.resumeId,
-
-                userId
-            });
-
-
-        if (!resume) {
-
-            throw new Error(
-                "Resume not found"
-            );
-        }
-
-
-        // =================================================
-        // FIND ANALYSIS
-        // =================================================
-
-        let analysis = null;
-
-        if (applicationEmail.analysisId) {
-
-            analysis =
-                await ResumeAnalysis.findOne({
+            const applicationEmail =
+                await ApplicationEmail.findOne({
 
                     _id:
-                        applicationEmail.analysisId,
+                        applicationEmailId,
 
                     userId
                 });
-        }
 
 
-        // =================================================
-        // REFINE EMAIL
-        // =================================================
+            if (!applicationEmail) {
 
-        const refinedEmail =
-            await refineApplicationEmail({
-
-                currentEmail:
-                    applicationEmail.email,
-
-                candidateData:
-                    resume.parsedData,
-
-                jdProfile:
-                    analysis?.jdProfile || {},
-
-                role:
-                    applicationEmail.role,
-
-                jobUrl:
-                    applicationEmail.jobUrl,
-
-                userRequest:
-                    userRequest.trim()
-            });
+                throw new Error(
+                    "Application email not found"
+                );
+            }
 
 
-        if (!refinedEmail) {
+            // =================================================
+            // REFINE SUBJECT + EMAIL
+            // =================================================
+
+            const refinedEmail =
+                await refineApplicationEmail({
+
+                    currentSubject:
+                        applicationEmail.subject,
+
+                    currentEmail:
+                        applicationEmail.email,
+
+                    role:
+                        applicationEmail.role,
+
+                    jobUrl:
+                        applicationEmail.jobUrl,
+
+                    userRequest:
+                        userRequest.trim()
+                });
+
+
+            // =================================================
+            // VALIDATE AI RESPONSE
+            // =================================================
+
+            if (
+                !refinedEmail ||
+                typeof refinedEmail !== "object"
+            ) {
+
+                throw new Error(
+                    "Failed to refine application email"
+                );
+            }
+
+
+            const subject =
+                refinedEmail.subject?.trim();
+
+
+            const email =
+                refinedEmail.email?.trim();
+
+
+            if (!subject) {
+
+                throw new Error(
+                    "AI failed to generate refined subject"
+                );
+            }
+
+
+            if (!email) {
+
+                throw new Error(
+                    "AI failed to generate refined email"
+                );
+            }
+
+
+            // =================================================
+            // UPDATE
+            // =================================================
+
+            applicationEmail.subject =
+                subject;
+
+
+            applicationEmail.email =
+                email;
+
+
+            applicationEmail.userRequest =
+                userRequest.trim();
+
+
+            await applicationEmail.save();
+
+
+            return applicationEmail;
+
+
+        } catch (error) {
 
             throw new Error(
+
+                error.message ||
                 "Failed to refine application email"
             );
         }
+    };
 
 
-        // =================================================
-        // UPDATE EXISTING DOCUMENT
-        // =================================================
 
-        applicationEmail.email =
-            refinedEmail.trim();
-
-        applicationEmail.userRequest =
-            userRequest.trim();
-
-        await applicationEmail.save();
-
-
-        return applicationEmail;
-
-
-    } catch (error) {
-
-        throw new Error(
-
-            error.message ||
-            "Failed to refine application email"
-        );
-    }
-};
-
-
+// =========================================================
 // DELETE APPLICATION EMAIL
+// =========================================================
+
+export const deleteApplicationEmailService =
+    async ({
+        applicationEmailId,
+        userId
+    }) => {
+
+        try {
+
+            const deletedEmail =
+                await ApplicationEmail.findOneAndDelete({
+
+                    _id:
+                        applicationEmailId,
+
+                    userId
+                });
 
 
-export const deleteApplicationEmailService = async ({
-    applicationEmailId,
-    userId
-}) => {
-
-    try {
-
-        const deletedEmail =
-            await ApplicationEmail.findOneAndDelete({
-
-                _id:
-                    applicationEmailId,
-
-                userId
-            });
+            return deletedEmail;
 
 
-        return deletedEmail;
+        } catch (error) {
 
-    } catch (error) {
+            throw new Error(
 
-        throw new Error(
-
-            error.message ||
-            "Failed to delete application email"
-        );
-    }
-};
+                error.message ||
+                "Failed to delete application email"
+            );
+        }
+    };

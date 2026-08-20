@@ -1,24 +1,57 @@
-import { useEffect, useState } from "react";
+import {
+    useEffect,
+    useState
+} from "react";
+
+import {
+    FileText,
+    Plus
+} from "lucide-react";
+
 import {
     useNavigate
 } from "react-router";
+
 import {
-    getResumes,
-    uploadResume,
-    deleteResume
+    getResumes
 } from "../../api/resume.api";
+
+import ResumeList
+    from "../../components/resume/ResumeList";
+
+import EmptyState
+    from "../../components/dashboard/EmptyState";
+
+import ErrorState
+    from "../../components/dashboard/ErrorState";
+
+import LoadingState
+    from "../../components/dashboard/LoadingState";
 
 
 const Resumes = () => {
 
-    const [resumes, setResumes] = useState([]);
-    const [file, setFile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false);
-    const [error, setError] = useState("");
-    const [resumeName, setResumeName] = useState("");
-    const [targetRole, setTargetRole] = useState("");
+    const navigate =
+        useNavigate();
 
+
+    // =====================================================
+    // STATE
+    // =====================================================
+
+    const [resumes, setResumes] =
+        useState([]);
+
+    const [loading, setLoading] =
+        useState(true);
+
+    const [error, setError] =
+        useState("");
+
+
+    // =====================================================
+    // LOAD RESUMES
+    // =====================================================
 
     const loadResumes = async () => {
 
@@ -27,12 +60,15 @@ const Resumes = () => {
             setLoading(true);
             setError("");
 
+
             const response =
                 await getResumes();
 
+
             setResumes(
-                response.data?.data || []
+                response?.data?.data || []
             );
+
 
         } catch (error) {
 
@@ -41,10 +77,12 @@ const Resumes = () => {
                 error
             );
 
+
             setError(
                 error.response?.data?.message ||
-                "Failed to load resumes"
+                "Failed to load resumes."
             );
+
 
         } finally {
 
@@ -54,6 +92,10 @@ const Resumes = () => {
     };
 
 
+    // =====================================================
+    // INITIAL LOAD
+    // =====================================================
+
     useEffect(() => {
 
         loadResumes();
@@ -61,463 +103,334 @@ const Resumes = () => {
     }, []);
 
 
-    const handleFileChange = (event) => {
+    // =====================================================
+    // LOADING
+    // =====================================================
 
-        const selectedFile =
-            event.target.files?.[0];
+    if (loading) {
 
-        setFile(
-            selectedFile || null
+        return (
+
+            <div className="
+                min-h-screen
+                bg-[#FDFBF7]
+            ">
+
+                <div className="
+                    max-w-6xl
+                    mx-auto
+                    px-5
+                    sm:px-6
+                    py-8
+                    sm:py-10
+                ">
+
+                    <LoadingState />
+
+                </div>
+
+            </div>
         );
-
-        setError("");
-    };
-
-
-const handleUpload = async () => {
-
-    if (!resumeName.trim()) {
-
-        setError(
-            "Please enter a resume name."
-        );
-
-        return;
     }
 
 
-    if (!targetRole.trim()) {
+    // =====================================================
+    // ERROR
+    // =====================================================
 
-        setError(
-            "Please enter the target role."
+    if (error) {
+
+        return (
+
+            <div className="
+                min-h-screen
+                bg-[#FDFBF7]
+            ">
+
+                <div className="
+                    max-w-6xl
+                    mx-auto
+                    px-5
+                    sm:px-6
+                    py-8
+                    sm:py-10
+                ">
+
+                    <ErrorState
+                        message={error}
+                        onRetry={loadResumes}
+                    />
+
+                </div>
+
+            </div>
         );
-
-        return;
     }
 
 
-    if (!file) {
-
-        setError(
-            "Please select a resume."
-        );
-
-        return;
-    }
-
-
-    try {
-
-        setUploading(true);
-        setError("");
-
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-            "resumeName",
-            resumeName.trim()
-        );
-
-
-        formData.append(
-            "targetRole",
-            targetRole.trim()
-        );
-
-
-        formData.append(
-            "resume",
-            file
-        );
-
-
-        await uploadResume(
-            formData
-        );
-
-
-        setResumeName("");
-        setTargetRole("");
-        setFile(null);
-
-
-        await loadResumes();
-
-
-    } catch (error) {
-
-        console.error(
-            "Resume upload failed:",
-            error
-        );
-
-
-        setError(
-            error.response?.data?.message ||
-            "Failed to upload resume"
-        );
-
-
-    } finally {
-
-        setUploading(false);
-    }
-};
-
-
-    const handleDelete = async (
-        resumeId
-    ) => {
-
-        const confirmed =
-            window.confirm(
-                "Are you sure you want to delete this resume?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        try {
-
-            setError("");
-
-            await deleteResume(
-                resumeId
-            );
-
-            setResumes(
-                (current) =>
-                    current.filter(
-                        (resume) =>
-                            resume._id !== resumeId
-                    )
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Resume deletion failed:",
-                error
-            );
-
-            setError(
-                error.response?.data?.message ||
-                "Failed to delete resume"
-            );
-
-        }
-    };
-
+    // =====================================================
+    // RENDER
+    // =====================================================
 
     return (
 
- <div className="max-w-5xl mx-auto">
+        <div className="
+            min-h-screen
+            bg-[#FDFBF7]
+        ">
+
+            <div className="
+                max-w-6xl
+                mx-auto
+                px-5
+                sm:px-6
+                py-8
+                sm:py-10
+                pb-16
+            ">
+
+
+                {/* =================================================
+                    HEADER
+                ================================================= */}
+
+                <div className="
+                    flex
+                    flex-col
+                    sm:flex-row
+                    sm:items-end
+                    sm:justify-between
+                    gap-5
+                    mb-8
+                ">
+
+                    <div>
+
+
+
+                        {/* TITLE */}
+
+                        <h1 className="
+                        
+                            text-2xl
+                            sm:text-3xl
+                            font-semibold
+                            tracking-tight
+                            text-gray-900
+                        ">
+
+                            My Resumes
+
+                        </h1>
+
+
+                        {/* DESCRIPTION */}
+
+                        <p className="
+                            mt-1.5
+                            text-sm
+                            leading-6
+                            text-gray-500
+                            max-w-lg
+                        ">
+
+                            View and manage your saved resumes.
+
+                        </p>
+
+                    </div>
+
+
+                    {/* =================================================
+                        UPLOAD BUTTON
+                    ================================================= */}
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            navigate(
+                                "/resumes/upload"
+                            )
+                        }
+                        className="
+                            shrink-0
+                            inline-flex
+                            items-center
+                            justify-center
+                            gap-2
+                            px-4
+                            py-2.5
+                            rounded-xl
+                            bg-gray-900
+                            text-white
+                            text-sm
+                            font-medium
+                            shadow-sm
+                            hover:bg-gray-800
+                            hover:shadow-md
+                            hover:-translate-y-0.5
+                            active:translate-y-0
+                            transition-all
+                            duration-200
+                        "
+                    >
+
+                        <Plus
+                            size={16}
+                            strokeWidth={2}
+                        />
 
-    {/* ================================================= */}
-    {/* HEADER */}
-    {/* ================================================= */}
+                        Upload Resume
 
-    <div className="mb-8">
+                    </button>
 
-        <h1 className="text-2xl font-bold">
-            Resumes
-        </h1>
+                </div>
 
-        <p className="mt-2 text-gray-600">
-            Upload and manage your resumes.
-        </p>
 
-    </div>
+                {/* =================================================
+                    RESUME COUNT
+                ================================================= */}
 
+                {resumes.length > 0 && (
 
-    {/* ================================================= */}
-    {/* UPLOAD RESUME */}
-    {/* ================================================= */}
+                    <div className="
+                        mb-5
+                        flex
+                        items-center
+                        justify-between
+                        gap-4
+                    ">
 
-    <div className="bg-white border rounded-xl p-6 mb-8">
+                        <div>
 
-        <h2 className="text-lg font-semibold mb-1">
-            Upload Resume
-        </h2>
+                            <div className="
+                                flex
+                                items-center
+                                gap-2.5
+                            ">
 
-        <p className="text-sm text-gray-500 mb-6">
-            Add your resume and specify the role you're targeting.
-        </p>
+                                <h2 className="
+                                    text-lg
+                                    font-semibold
+                                    tracking-tight
+                                    text-gray-900
+                                ">
 
+                                    Saved Resumes
 
-        {/* Resume Name */}
+                                </h2>
 
-        <div className="mb-4">
 
-            <label
-                htmlFor="resumeName"
-                className="block text-sm font-medium text-gray-700 mb-2"
-            >
-                Resume Name
-            </label>
+                                <span className="
+                                    inline-flex
+                                    min-w-7
+                                    h-6
+                                    items-center
+                                    justify-center
+                                    px-2
+                                    rounded-full
+                                    bg-white
+                                    border
+                                    border-[#E8E2D7]
+                                    text-[11px]
+                                    font-semibold
+                                    text-gray-600
+                                    shadow-sm
+                                ">
 
-            <input
-                id="resumeName"
-                type="text"
-                value={resumeName}
-                onChange={(event) =>
-                    setResumeName(event.target.value)
-                }
-                placeholder="e.g. Software Engineer Resume"
-                disabled={uploading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100"
-            />
+                                    {resumes.length}
 
-        </div>
-
-
-        {/* Target Role */}
-
-        <div className="mb-4">
-
-            <label
-                htmlFor="targetRole"
-                className="block text-sm font-medium text-gray-700 mb-2"
-            >
-                Target Role
-            </label>
-
-            <input
-                id="targetRole"
-                type="text"
-                value={targetRole}
-                onChange={(event) =>
-                    setTargetRole(event.target.value)
-                }
-                placeholder="e.g. Software Engineer"
-                disabled={uploading}
-                className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-black focus:ring-1 focus:ring-black disabled:bg-gray-100"
-            />
-
-        </div>
-
-
-        {/* File */}
-
-        <div className="mb-5">
-
-            <label
-                htmlFor="resumeFile"
-                className="block text-sm font-medium text-gray-700 mb-2"
-            >
-                Resume File
-            </label>
-
-            <input
-                id="resumeFile"
-                type="file"
-                accept=".pdf,.doc,.docx"
-                onChange={handleFileChange}
-                disabled={uploading}
-                className="block w-full text-sm text-gray-600"
-            />
-
-        </div>
-
-
-        {/* Selected File */}
-
-        {file && (
-
-            <div className="mb-5 p-3 rounded-lg bg-gray-50 border">
-
-                <p className="text-sm text-gray-700">
-                    <span className="font-medium">
-                        Selected:
-                    </span>{" "}
-                    {file.name}
-                </p>
-
-            </div>
-
-        )}
-
-
-        {/* Upload Button */}
-
-        <button
-            type="button"
-            onClick={handleUpload}
-            disabled={
-                uploading ||
-                !file ||
-                !resumeName.trim() ||
-                !targetRole.trim()
-            }
-            className="px-5 py-2.5 rounded-lg bg-black text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-800 transition"
-        >
-            {uploading
-                ? "Uploading..."
-                : "Upload Resume"}
-        </button>
-
-    </div>
-
-
-    {/* ================================================= */}
-    {/* ERROR */}
-    {/* ================================================= */}
-
-    {error && (
-
-        <div className="mb-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-            {error}
-        </div>
-
-    )}
-
-
-    {/* ================================================= */}
-    {/* RESUME LIST */}
-    {/* ================================================= */}
-
-    <div>
-
-        <div className="flex items-center justify-between mb-4">
-
-            <div>
-
-                <h2 className="text-lg font-semibold">
-                    My Resumes
-                </h2>
-
-                <p className="text-sm text-gray-500 mt-1">
-                    Your uploaded resumes and target roles.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        {loading ? (
-
-            <div className="bg-white border rounded-xl p-8 text-center">
-
-                <p className="text-gray-500">
-                    Loading resumes...
-                </p>
-
-            </div>
-
-        ) : resumes.length === 0 ? (
-
-            <div className="bg-white border rounded-xl p-8 text-center">
-
-                <p className="text-gray-500">
-                    No resumes uploaded yet.
-                </p>
-
-                <p className="text-sm text-gray-400 mt-1">
-                    Upload your first resume to get started.
-                </p>
-
-            </div>
-
-        ) : (
-
-            <div className="space-y-3">
-
-                {resumes.map(
-                    (resume) => (
-
-                        <div
-                            key={resume._id}
-                            className="bg-white border rounded-xl p-5 flex items-center justify-between gap-6"
-                        >
-
-                            {/* Resume information */}
-
-                            <div className="min-w-0">
-
-                                <h3 className="font-medium text-gray-900 truncate">
-                                    {resume.resumeName ||
-                                        resume.fileName ||
-                                        resume.name ||
-                                        "Resume"}
-                                </h3>
-
-
-                                {resume.targetRole && (
-
-                                    <p className="text-sm text-gray-600 mt-1">
-                                        Target role:{" "}
-                                        <span className="font-medium">
-                                            {resume.targetRole}
-                                        </span>
-                                    </p>
-
-                                )}
-
-
-                                {resume.createdAt && (
-
-                                    <p className="text-xs text-gray-400 mt-2">
-                                        Uploaded{" "}
-                                        {new Date(
-                                            resume.createdAt
-                                        ).toLocaleDateString()}
-                                    </p>
-
-                                )}
+                                </span>
 
                             </div>
 
 
-                            {/* Actions */}
+                            <p className="
+                                text-sm
+                                text-gray-500
+                                mt-1
+                            ">
 
-                            <div className="flex items-center gap-4 shrink-0">
-                                   <div className="flex items-center gap-4 shrink-0">
+                                {resumes.length}{" "}
 
-    <button
-        type="button"
-        onClick={() =>
-            navigate(
-                `/resumes/${resume._id}`
-            )
-        }
-        className="text-sm font-medium text-black hover:underline"
-    >
-        View
-    </button>
+                                {resumes.length === 1
+                                    ? "resume"
+                                    : "resumes"}
 
-    <button
-        type="button"
-        onClick={() =>
-            handleDelete(resume._id)
-        }
-        className="text-sm text-red-600 hover:text-red-700"
-    >
-        Delete
-    </button>
+                                {" "}saved to your account.
 
-</div>
-
-
-                            </div>
+                            </p>
 
                         </div>
 
-                    )
+                    </div>
+
+                )}
+
+
+                {/* =================================================
+                    CONTENT
+                ================================================= */}
+
+                {resumes.length === 0 ? (
+
+                    <div className="
+                        rounded-2xl
+                        border
+                        border-[#E8E2D7]
+                        bg-[#F7F3EA]/50
+                        p-1
+                    ">
+
+                        <EmptyState
+
+                            title="No resumes yet"
+
+                            description="
+                                Upload your first resume to start
+                                analyzing job opportunities.
+                            "
+
+                            actionLabel="Upload Resume"
+
+                            onAction={() =>
+                                navigate(
+                                    "/resumes/upload"
+                                )
+                            }
+
+                        />
+
+                    </div>
+
+                ) : (
+
+                    <div className="
+                        rounded-2xl
+                        border
+                        border-[#E8E2D7]
+                        bg-white/50
+                        p-3
+                        sm:p-4
+                    ">
+
+                        <ResumeList
+
+                            resumes={
+                                resumes
+                            }
+
+                            loading={false}
+
+                        />
+
+                    </div>
+
                 )}
 
             </div>
 
-        )}
-
-    </div>
-
-</div>
+        </div>
     );
 };
 

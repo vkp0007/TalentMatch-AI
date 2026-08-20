@@ -8,7 +8,9 @@ import {
 } from "../services/referral.service.js";
 
 
+// =========================================================
 // CREATE REFERRAL DRAFT
+// =========================================================
 
 export const createReferralDraft =
     async (req, res) => {
@@ -16,8 +18,6 @@ export const createReferralDraft =
         try {
 
             const {
-                analysisId,
-                resumeId,
                 recipientName,
                 companyName,
                 role,
@@ -32,10 +32,6 @@ export const createReferralDraft =
                     userId:
                         req.user._id,
 
-                    analysisId,
-
-                    resumeId,
-
                     recipientName,
 
                     companyName,
@@ -45,6 +41,7 @@ export const createReferralDraft =
                     jobUrl,
 
                     customContext
+
                 });
 
 
@@ -56,10 +53,17 @@ export const createReferralDraft =
                     "Referral draft created successfully",
 
                 data: draft
+
             });
 
 
         } catch (error) {
+
+            console.error(
+                "Create referral draft error:",
+                error
+            );
+
 
             return res.status(500).json({
 
@@ -68,13 +72,15 @@ export const createReferralDraft =
                 message:
                     error.message ||
                     "Failed to create referral draft"
+
             });
         }
     };
 
 
+// =========================================================
 // GET ALL USER REFERRAL DRAFTS
-
+// =========================================================
 
 export const getUserReferralDrafts =
     async (req, res) => {
@@ -91,13 +97,22 @@ export const getUserReferralDrafts =
 
                 success: true,
 
-                count: drafts.length,
+                count:
+                    drafts.length,
 
-                data: drafts
+                data:
+                    drafts
+
             });
 
 
         } catch (error) {
+
+            console.error(
+                "Get referral drafts error:",
+                error
+            );
+
 
             return res.status(500).json({
 
@@ -106,13 +121,15 @@ export const getUserReferralDrafts =
                 message:
                     error.message ||
                     "Failed to fetch referral drafts"
+
             });
         }
     };
 
 
+// =========================================================
 // GET SINGLE REFERRAL DRAFT
-
+// =========================================================
 
 export const getReferralDraftById =
     async (req, res) => {
@@ -127,9 +144,12 @@ export const getReferralDraftById =
             const draft =
                 await getReferralDraftByIdService({
 
-                    referralId: id,
+                    referralId:
+                        id,
 
-                    userId: req.user._id
+                    userId:
+                        req.user._id
+
                 });
 
 
@@ -141,6 +161,7 @@ export const getReferralDraftById =
 
                     message:
                         "Referral draft not found"
+
                 });
             }
 
@@ -149,11 +170,19 @@ export const getReferralDraftById =
 
                 success: true,
 
-                data: draft
+                data:
+                    draft
+
             });
 
 
         } catch (error) {
+
+            console.error(
+                "Get referral draft error:",
+                error
+            );
+
 
             return res.status(500).json({
 
@@ -162,13 +191,15 @@ export const getReferralDraftById =
                 message:
                     error.message ||
                     "Failed to fetch referral draft"
+
             });
         }
     };
 
 
+// =========================================================
 // DELETE REFERRAL DRAFT
-
+// =========================================================
 
 export const deleteReferralDraft =
     async (req, res) => {
@@ -183,9 +214,12 @@ export const deleteReferralDraft =
             const deletedDraft =
                 await deleteReferralDraftService({
 
-                    referralId: id,
+                    referralId:
+                        id,
 
-                    userId: req.user._id
+                    userId:
+                        req.user._id
+
                 });
 
 
@@ -197,6 +231,7 @@ export const deleteReferralDraft =
 
                     message:
                         "Referral draft not found"
+
                 });
             }
 
@@ -207,10 +242,17 @@ export const deleteReferralDraft =
 
                 message:
                     "Referral draft deleted successfully"
+
             });
 
 
         } catch (error) {
+
+            console.error(
+                "Delete referral draft error:",
+                error
+            );
+
 
             return res.status(500).json({
 
@@ -219,9 +261,11 @@ export const deleteReferralDraft =
                 message:
                     error.message ||
                     "Failed to delete referral draft"
+
             });
         }
     };
+
 
 // =========================================================
 // UPDATE REFERRAL DRAFT
@@ -236,6 +280,7 @@ export const updateReferralDraft =
                 id
             } = req.params;
 
+
             const {
                 recipientName,
                 companyName,
@@ -249,7 +294,8 @@ export const updateReferralDraft =
             const updatedDraft =
                 await updateReferralDraftService({
 
-                    referralId: id,
+                    referralId:
+                        id,
 
                     userId:
                         req.user._id,
@@ -265,6 +311,7 @@ export const updateReferralDraft =
                     customContext,
 
                     draft
+
                 });
 
 
@@ -276,6 +323,7 @@ export const updateReferralDraft =
 
                     message:
                         "Referral draft not found"
+
                 });
             }
 
@@ -287,11 +335,19 @@ export const updateReferralDraft =
                 message:
                     "Referral draft updated successfully",
 
-                data: updatedDraft
+                data:
+                    updatedDraft
+
             });
 
 
         } catch (error) {
+
+            console.error(
+                "Update referral draft error:",
+                error
+            );
+
 
             return res.status(500).json({
 
@@ -300,61 +356,72 @@ export const updateReferralDraft =
                 message:
                     error.message ||
                     "Failed to update referral draft"
+
             });
         }
     };
 
 
-    // =========================================================
+// =========================================================
 // REFINE REFERRAL DRAFT
 // =========================================================
 
-export const refineReferralDraft = async (
-    req,
-    res
-) => {
+export const refineReferralDraft =
+    async (
+        req,
+        res
+    ) => {
 
-    try {
+        try {
 
-        const {
-            instruction
-        } = req.body;
-
-
-        const result =
-            await refineReferralDraftService({
-
-                referralId:
-                    req.params.id,
-
-                userId:
-                    req.user._id,
-
+            const {
                 instruction
+            } = req.body;
+
+
+            const result =
+                await refineReferralDraftService({
+
+                    referralId:
+                        req.params.id,
+
+                    userId:
+                        req.user._id,
+
+                    instruction
+
+                });
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Referral draft refined successfully",
+
+                data:
+                    result
+
             });
 
 
-        return res.status(200).json({
+        } catch (error) {
 
-            success: true,
-
-            message:
-                "Referral draft refined successfully",
-
-            data:
-                result
-        });
+            console.error(
+                "Refine referral draft error:",
+                error
+            );
 
 
-    } catch (error) {
+            return res.status(500).json({
 
-        return res.status(500).json({
+                success: false,
 
-            success: false,
+                message:
+                    error.message ||
+                    "Failed to refine referral draft"
 
-            message:
-                error.message ||
-                "Failed to refine referral draft"
-        });
-    }
-};
+            });
+        }
+    };

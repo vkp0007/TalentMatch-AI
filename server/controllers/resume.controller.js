@@ -1,6 +1,7 @@
 import {
     uploadResumeService,
-    getResumeByIdService
+    getResumeByIdService,
+    deleteResumeService
 }
 from "../services/resume.service.js";
 
@@ -160,5 +161,71 @@ export const getResumeById = async (req, res) => {
             message:
                 "Failed to get resume"
         });
+    }
+};
+
+// =========================================================
+// DELETE RESUME
+// =========================================================
+
+export const deleteResume = async (
+    req,
+    res,
+    next
+) => {
+
+    try {
+
+        const {
+            resumeId
+        } = req.params;
+
+
+        if (!resumeId) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Resume ID is required"
+            });
+        }
+
+
+        const deletedResume =
+            await deleteResumeService({
+
+                resumeId,
+
+                userId:
+                    req.user._id
+            });
+
+
+        if (!deletedResume) {
+
+            return res.status(404).json({
+
+                success: false,
+
+                message:
+                    "Resume not found"
+            });
+        }
+
+
+        return res.status(200).json({
+
+            success: true,
+
+            message:
+                "Resume deleted successfully"
+        });
+
+
+    } catch (error) {
+
+        next(error);
     }
 };

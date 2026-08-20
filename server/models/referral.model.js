@@ -9,20 +9,6 @@ const ReferralDraftSchema = new mongoose.Schema(
             index: true
         },
 
-        analysisId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "ResumeAnalysis",
-            default: null,
-            index: true
-        },
-
-        resumeId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Resume",
-            default: null,
-            index: true
-        },
-
         recipientName: {
             type: String,
             default: ""
@@ -40,12 +26,12 @@ const ReferralDraftSchema = new mongoose.Schema(
 
         jobUrl: {
             type: String,
-            default: ""
+            required: true
         },
 
         customContext: {
             type: String,
-            default: ""
+            required: true
         },
 
         draft: {

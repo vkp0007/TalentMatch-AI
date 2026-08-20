@@ -6,7 +6,8 @@ from "../middlewares/upload.middleware.js";
 import {
     uploadResume,
     getUserResumes,
-    getResumeById
+    getResumeById,
+    deleteResume
 } from "../controllers/resume.controller.js";
 
 import {
@@ -43,5 +44,10 @@ router.get(
     getResumeById
 );
 
+router.delete(
+    "/:resumeId",
+    protect,
+    deleteResume
+);
 
 export default router;

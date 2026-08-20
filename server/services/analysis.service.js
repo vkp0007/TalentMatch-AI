@@ -10,9 +10,7 @@ import {
 from "./ai.service.js";
 
 
-// =========================================================
 // ANALYZE RESUME AGAINST JOB
-// =========================================================
 
 export const analyzeResumeService = async ({
     userId,

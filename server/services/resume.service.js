@@ -143,3 +143,34 @@ export const getResumeByIdService = async ({
 
     return resume;
 };
+
+// =========================================================
+// DELETE RESUME
+// =========================================================
+
+export const deleteResumeService = async ({
+    resumeId,
+    userId
+}) => {
+
+    try {
+
+        const deletedResume =
+            await Resume.findOneAndDelete({
+
+                _id: resumeId,
+
+                userId
+            });
+
+
+        return deletedResume;
+
+    } catch (error) {
+
+        throw new Error(
+            error.message ||
+            "Failed to delete resume"
+        );
+    }
+};

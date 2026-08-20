@@ -3,7 +3,9 @@ import express from "express";
 import {
     createInterviewChat,
     sendInterviewMessage,
-    getInterviewChat
+    getInterviewChat,
+    getUserInterviewChats,
+    deleteInterviewChat
 } from "../controllers/interviewChat.controller.js";
 
 import {
@@ -27,24 +29,46 @@ router.post(
 
 
 // =========================================================
-// SEND MESSAGE
+// GET ALL USER CHATS
 // =========================================================
 
-router.post(
-    "/:chatId/message",
+router.get(
+    "/",
     protect,
-    sendInterviewMessage
+    getUserInterviewChats
 );
 
 
 // =========================================================
-// GET CHAT
+// GET SINGLE CHAT
 // =========================================================
 
 router.get(
     "/:chatId",
     protect,
     getInterviewChat
+);
+
+
+// =========================================================
+// SEND MESSAGE
+// =========================================================
+
+router.post(
+    "/:chatId/messages",
+    protect,
+    sendInterviewMessage
+);
+
+
+// =========================================================
+// DELETE CHAT
+// =========================================================
+
+router.delete(
+    "/:chatId",
+    protect,
+    deleteInterviewChat
 );
 
 

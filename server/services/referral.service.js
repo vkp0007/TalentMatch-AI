@@ -1,28 +1,19 @@
-import { ReferralDraft }
-from "../models/referral.model.js";
-
-import { ResumeAnalysis }
-from "../models/analysis.model.js";
-
-import { Resume }
-from "../models/resume.model.js";
+import {
+    ReferralDraft
+} from "../models/referral.model.js";
 
 import {
-    generateReferralDraft
-} from "./llm.service.js";
-
-import {
+    generateReferralDraft,
     refineReferralDraft
 } from "./llm.service.js";
 
 
-
-// GENERATE REFERRAL DRAFT
+// =========================================================
+// CREATE REFERRAL DRAFT
+// =========================================================
 
 export const createReferralDraftService = async ({
     userId,
-    analysisId,
-    resumeId,
     recipientName,
     companyName,
     role,
@@ -32,6 +23,9 @@ export const createReferralDraftService = async ({
 
     try {
 
+        // =================================================
+        // VALIDATION
+        // =================================================
 
         if (!companyName?.trim()) {
 
@@ -39,6 +33,7 @@ export const createReferralDraftService = async ({
                 "Company name is required"
             );
         }
+
 
         if (!role?.trim()) {
 
@@ -48,122 +43,94 @@ export const createReferralDraftService = async ({
         }
 
 
-        let resume = null;
+        if (!jobUrl?.trim()) {
 
-        if (resumeId) {
-
-            resume =
-                await Resume.findOne({
-
-                    _id: resumeId,
-
-                    userId
-                });
-
-            if (!resume) {
-
-                throw new Error(
-                    "Resume not found"
-                );
-            }
+            throw new Error(
+                "Job URL is required"
+            );
         }
 
-        let analysis = null;
 
-        if (analysisId) {
+        if (!customContext?.trim()) {
 
-            analysis =
-                await ResumeAnalysis.findOne({
-
-                    _id: analysisId,
-
-                    userId
-                });
-
-            if (!analysis) {
-
-                throw new Error(
-                    "Analysis not found"
-                );
-            }
+            throw new Error(
+                "Referral context is required"
+            );
         }
 
-const company =
-    companyName.trim();
 
-const targetRole =
-    role.trim();
-
-const context =
-    customContext?.trim() || "";
+        const company =
+            companyName.trim();
 
 
-// =================================================
-// GENERATE REFERRAL USING GROQ
-// =================================================
-
-const draft =
-    await generateReferralDraft({
-
-        recipientName:
-            recipientName?.trim() ||
-            "there",
-
-        companyName:
-            company,
-
-        role:
-            targetRole,
-
-        matchedSkills:
-            analysis?.matchedSkills ||
-            [],
-
-        customContext:
-            context,
-
-        resumeData:
-            resume?.parsedData ||
-            {}
-    });
+        const targetRole =
+            role.trim();
 
 
-// =================================================
-// SAVE DRAFT
-// =================================================
+        const url =
+            jobUrl.trim();
 
-const referral =
-    await ReferralDraft.create({
 
-        userId,
+        const context =
+            customContext.trim();
 
-        analysisId:
-            analysis?._id ||
-            null,
 
-        resumeId:
-            resume?._id ||
-            null,
+        const recipient =
+            recipientName?.trim() || "there";
 
-        recipientName:
-            recipientName?.trim() ||
-            "",
 
-        companyName:
-            company,
+        // =================================================
+        // GENERATE REFERRAL USING LLM
+        // =================================================
 
-        role:
-            targetRole,
+        const draft =
+            await generateReferralDraft({
 
-        jobUrl:
-            jobUrl?.trim() ||
-            "",
+                recipientName:
+                    recipient,
 
-        customContext:
-            context,
+                companyName:
+                    company,
 
-        draft
-    });
+                role:
+                    targetRole,
+
+                customContext:
+                    context,
+
+                jobUrl:
+                    url
+
+            });
+
+
+        // =================================================
+        // SAVE DRAFT
+        // =================================================
+
+        const referral =
+            await ReferralDraft.create({
+
+                userId,
+
+                recipientName:
+                    recipientName?.trim() || "",
+
+                companyName:
+                    company,
+
+                role:
+                    targetRole,
+
+                jobUrl:
+                    url,
+
+                customContext:
+                    context,
+
+                draft
+
+            });
 
 
         return referral;
@@ -175,12 +142,15 @@ const referral =
 
             error.message ||
             "Failed to create referral draft"
+
         );
     }
 };
 
-// GET ALL USER REFERRAL DRAFTS
 
+// =========================================================
+// GET ALL USER REFERRAL DRAFTS
+// =========================================================
 
 export const getUserReferralDraftsService = async (
     userId
@@ -194,20 +164,15 @@ export const getUserReferralDraftsService = async (
                 userId
 
             })
-            .populate(
-                "analysisId",
-                "targetRole semanticScore skillScore finalScore matchedSkills missingSkills"
-            )
-            .populate(
-                "resumeId",
-                "resumeName targetRole originalFileName createdAt"
-            )
             .sort({
+
                 createdAt: -1
+
             });
 
 
         return drafts;
+
 
     } catch (error) {
 
@@ -215,14 +180,15 @@ export const getUserReferralDraftsService = async (
 
             error.message ||
             "Failed to fetch referral drafts"
+
         );
     }
 };
 
 
-
+// =========================================================
 // GET SINGLE REFERRAL DRAFT
-
+// =========================================================
 
 export const getReferralDraftByIdService = async ({
     referralId,
@@ -231,23 +197,19 @@ export const getReferralDraftByIdService = async ({
 
     try {
 
-        const draft = await ReferralDraft.findOne({
+        const draft =
+            await ReferralDraft.findOne({
 
-                _id: referralId,
+                _id:
+                    referralId,
 
                 userId
-            })
-            .populate(
-                "analysisId",
-                "targetRole semanticScore skillScore finalScore matchedSkills missingSkills"
-            )
-            .populate(
-                "resumeId",
-                "resumeName targetRole originalFileName createdAt"
-            );
+
+            });
 
 
         return draft;
+
 
     } catch (error) {
 
@@ -255,12 +217,15 @@ export const getReferralDraftByIdService = async ({
 
             error.message ||
             "Failed to fetch referral draft"
+
         );
     }
 };
 
 
+// =========================================================
 // DELETE REFERRAL DRAFT
+// =========================================================
 
 export const deleteReferralDraftService = async ({
     referralId,
@@ -272,23 +237,32 @@ export const deleteReferralDraftService = async ({
         const deletedDraft =
             await ReferralDraft.findOneAndDelete({
 
-                _id: referralId,
+                _id:
+                    referralId,
 
                 userId
+
             });
 
+
         return deletedDraft;
+
 
     } catch (error) {
 
         throw new Error(
+
             error.message ||
             "Failed to delete referral draft"
+
         );
     }
 };
 
+
+// =========================================================
 // UPDATE REFERRAL DRAFT
+// =========================================================
 
 export const updateReferralDraftService = async ({
     referralId,
@@ -306,84 +280,155 @@ export const updateReferralDraftService = async ({
         const referral =
             await ReferralDraft.findOne({
 
-                _id: referralId,
+                _id:
+                    referralId,
 
                 userId
+
             });
+
 
         if (!referral) {
 
             return null;
+
         }
 
 
-        // Update only supplied fields
-        if (recipientName !== undefined) {
+        // =================================================
+        // UPDATE SUPPLIED FIELDS
+        // =================================================
+
+        if (
+            recipientName !== undefined
+        ) {
+
             referral.recipientName =
                 recipientName.trim();
+
         }
 
-        if (companyName !== undefined) {
+
+        if (
+            companyName !== undefined
+        ) {
+
             referral.companyName =
                 companyName.trim();
+
         }
 
-        if (role !== undefined) {
+
+        if (
+            role !== undefined
+        ) {
+
             referral.role =
                 role.trim();
+
         }
 
-        if (jobUrl !== undefined) {
+
+        if (
+            jobUrl !== undefined
+        ) {
+
             referral.jobUrl =
                 jobUrl.trim();
+
         }
 
-        if (customContext !== undefined) {
+
+        if (
+            customContext !== undefined
+        ) {
+
             referral.customContext =
                 customContext.trim();
+
         }
 
-        if (draft !== undefined) {
+
+        if (
+            draft !== undefined
+        ) {
+
             referral.draft =
                 draft.trim();
+
         }
 
 
-        // Validation
+        // =================================================
+        // VALIDATION
+        // =================================================
+
         if (!referral.companyName) {
 
             throw new Error(
                 "Company name is required"
             );
+
         }
+
 
         if (!referral.role) {
 
             throw new Error(
                 "Role is required"
             );
+
         }
+
+
+        if (!referral.jobUrl) {
+
+            throw new Error(
+                "Job URL is required"
+            );
+
+        }
+
+
+        if (!referral.customContext) {
+
+            throw new Error(
+                "Referral context is required"
+            );
+
+        }
+
 
         if (!referral.draft) {
 
             throw new Error(
                 "Draft cannot be empty"
             );
+
         }
 
 
+        // =================================================
+        // SAVE
+        // =================================================
+
         await referral.save();
 
+
         return referral;
+
 
     } catch (error) {
 
         throw new Error(
+
             error.message ||
             "Failed to update referral draft"
+
         );
     }
 };
+
 
 // =========================================================
 // REFINE REFERRAL DRAFT USING AI
@@ -406,6 +451,7 @@ export const refineReferralDraftService = async ({
             throw new Error(
                 "Update instruction is required"
             );
+
         }
 
 
@@ -416,16 +462,12 @@ export const refineReferralDraftService = async ({
         const referral =
             await ReferralDraft.findOne({
 
-                _id: referralId,
+                _id:
+                    referralId,
 
                 userId
-            })
-            .populate(
-                "analysisId"
-            )
-            .populate(
-                "resumeId"
-            );
+
+            });
 
 
         if (!referral) {
@@ -433,6 +475,7 @@ export const refineReferralDraftService = async ({
             throw new Error(
                 "Referral draft not found"
             );
+
         }
 
 
@@ -458,20 +501,24 @@ export const refineReferralDraftService = async ({
                 role:
                     referral.role,
 
-                matchedSkills:
-                    referral.analysisId
-                        ?.matchedSkills ||
-                    [],
-
-                resumeData:
-                    referral.resumeId
-                        ?.parsedData ||
-                    {},
+                jobUrl:
+                    referral.jobUrl,
 
                 customContext:
-                    referral.customContext ||
-                    ""
+                    referral.customContext || ""
+
             });
+
+
+        // =================================================
+        // SAVE REFINED DRAFT
+        // =================================================
+
+        referral.draft =
+            updatedDraft;
+
+
+        await referral.save();
 
 
         // =================================================
@@ -484,7 +531,8 @@ export const refineReferralDraftService = async ({
                 referral._id,
 
             draft:
-                updatedDraft
+                referral.draft
+
         };
 
 
@@ -494,6 +542,7 @@ export const refineReferralDraftService = async ({
 
             error.message ||
             "Failed to refine referral draft"
+
         );
     }
 };

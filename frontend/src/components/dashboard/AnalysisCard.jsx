@@ -1,12 +1,16 @@
-import { Link } from "react-router";
-
 import {
-    Trash2
+    ArrowUpRight,
+    Trash2,
+    Target
 } from "lucide-react";
 
 import {
+    Link
+} from "react-router";
+
+import {
     deleteAnalysis
-} from "../../api/analysisApi.js";
+} from "../../api/analysis.api.js";
 
 
 const AnalysisCard = ({
@@ -14,45 +18,90 @@ const AnalysisCard = ({
     onDelete = null
 }) => {
 
-    // =====================================================
-    // SCORE COLOR
-    // =====================================================
+    const score =
+        typeof analysis?.finalScore === "number"
+            ? analysis.finalScore
+            : null;
 
-    const scoreColor =
 
-        analysis.finalScore >= 80
+    const matchedCount =
+        analysis?.matchedSkills?.length || 0;
 
-        ?
 
-        "bg-emerald-500"
-
-        :
-
-        analysis.finalScore >= 60
-
-        ?
-
-        "bg-amber-500"
-
-        :
-
-        "bg-red-500";
-
+    const missingCount =
+        analysis?.missingSkills?.length || 0;
 
 
     // =====================================================
-    // DELETE REPORT
+    // SCORE STYLE
     // =====================================================
 
-    const handleDelete = async () => {
+    const getScoreStyle = () => {
 
-        const confirmDelete =
+        if (score === null) {
+
+            return {
+                text: "text-gray-500",
+                bg: "bg-gray-100",
+                label: "No score"
+            };
+
+        }
+
+
+        if (score >= 80) {
+
+            return {
+                text: "text-emerald-700",
+                bg: "bg-emerald-50",
+                label: "Strong match"
+            };
+
+        }
+
+
+        if (score >= 60) {
+
+            return {
+                text: "text-amber-700",
+                bg: "bg-amber-50",
+                label: "Moderate match"
+            };
+
+        }
+
+
+        return {
+            text: "text-red-700",
+            bg: "bg-red-50",
+            label: "Needs improvement"
+        };
+    };
+
+
+    const scoreStyle =
+        getScoreStyle();
+
+
+    // =====================================================
+    // DELETE
+    // =====================================================
+
+    const handleDelete = async (event) => {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+
+        const confirmed =
             window.confirm(
-
-                "Delete this ATS report?"
+                "Delete this ATS analysis?"
             );
 
-        if (!confirmDelete) return;
+
+        if (!confirmed) {
+            return;
+        }
 
 
         try {
@@ -67,14 +116,18 @@ const AnalysisCard = ({
                 onDelete(
                     analysis._id
                 );
+
             }
 
-        } catch(error) {
+        } catch (error) {
 
-            console.log(error);
+            console.error(
+                "Failed to delete analysis:",
+                error
+            );
 
             alert(
-                "Failed to delete report"
+                "Failed to delete analysis."
             );
         }
     };
@@ -82,189 +135,253 @@ const AnalysisCard = ({
 
     return (
 
-        <div
-            className="
-
+        <div className="
+            group
             bg-white
             border
-            border-slate-200
+            border-[#E8E2D7]
             rounded-2xl
             p-5
-            hover:shadow-md
+            hover:border-gray-300
+            hover:shadow-sm
             transition-all
-            duration-300
+        ">
 
-            "
-        >
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
-            {/* ========================================= */}
-            {/* HEADER */}
-            {/* ========================================= */}
+            <div className="
+                flex
+                items-start
+                justify-between
+                gap-4
+            ">
 
-            <div className="flex items-start justify-between gap-4">
+                <div className="
+                    min-w-0
+                ">
 
-                <div className="min-w-0">
+                    <div className="
+                        flex
+                        items-center
+                        gap-2
+                        mb-2
+                    ">
 
-                    <h3
-                        className="
+                        <div className="
+                            w-8
+                            h-8
+                            shrink-0
+                            rounded-lg
+                            bg-[#F7F3EA]
+                            border
+                            border-[#E8E2D7]
+                            flex
+                            items-center
+                            justify-center
+                            text-gray-600
+                        ">
 
-                        text-lg
+                            <Target
+                                size={15}
+                                strokeWidth={1.8}
+                            />
+
+                        </div>
+
+
+                        <span className="
+                            text-[10px]
+                            uppercase
+                            tracking-wider
+                            font-semibold
+                            text-gray-400
+                        ">
+                            ATS Analysis
+                        </span>
+
+                    </div>
+
+
+                    <h3 className="
+                        text-base
                         font-semibold
-                        text-slate-900
+                        text-gray-900
                         truncate
+                    ">
 
-                        "
-                    >
                         {
                             analysis?.resumeId?.resumeName ||
-
                             "Resume Analysis"
                         }
+
                     </h3>
 
 
-                    <p
-                        className="
-
+                    <p className="
                         text-sm
-                        text-slate-500
+                        text-gray-500
                         mt-1
+                        truncate
+                    ">
 
-                        "
-                    >
                         {
-                            analysis.targetRole ||
-
+                            analysis?.targetRole ||
                             "General Role"
                         }
+
                     </p>
 
                 </div>
 
 
-                {/* ========================================= */}
-                {/* ATS SCORE */}
-                {/* ========================================= */}
+                {/* SCORE */}
 
-                <div
-                    className={`
+                {score !== null && (
 
-                    shrink-0
-                    px-3
-                    py-1.5
-                    rounded-xl
-                    text-white
-                    text-xs
-                    font-semibold
+                    <div className={`
+                        shrink-0
+                        px-3
+                        py-2
+                        rounded-xl
+                        ${scoreStyle.bg}
+                        ${scoreStyle.text}
+                        text-center
+                    `}>
 
-                    ${scoreColor}
+                        <p className="
+                            text-lg
+                            leading-none
+                            font-semibold
+                        ">
+                            {score.toFixed(0)}%
+                        </p>
 
-                    `}
-                >
-                    ATS: {analysis.finalScore}%
-                </div>
+                        <p className="
+                            text-[9px]
+                            uppercase
+                            tracking-wide
+                            mt-1
+                            opacity-70
+                        ">
+                            Match
+                        </p>
+
+                    </div>
+
+                )}
 
             </div>
 
 
+            {/* =================================================
+                SUMMARY
+            ================================================= */}
 
-            {/* ========================================= */}
-            {/* MATCH SUMMARY */}
-            {/* ========================================= */}
+            <div className="
+                flex
+                items-center
+                gap-2
+                mt-5
+                pt-4
+                border-t
+                border-gray-100
+            ">
 
-            <div className="flex flex-wrap gap-2 mt-5">
-
-                <span
-                    className="
-
+                <span className="
+                    inline-flex
+                    items-center
+                    px-2.5
+                    py-1
+                    rounded-full
                     bg-emerald-50
                     text-emerald-700
-                    px-3
-                    py-1
-                    rounded-full
-                    text-xs
+                    text-[11px]
                     font-medium
-
-                    "
-                >
-                    {analysis.matchedSkills.length} Matched
+                ">
+                    {matchedCount} matched
                 </span>
 
 
-                <span
-                    className="
-
-                    bg-red-50
-                    text-red-700
-                    px-3
+                <span className="
+                    inline-flex
+                    items-center
+                    px-2.5
                     py-1
                     rounded-full
-                    text-xs
+                    bg-red-50
+                    text-red-700
+                    text-[11px]
                     font-medium
-
-                    "
-                >
-                    {analysis.missingSkills.length} Missing
+                ">
+                    {missingCount} missing
                 </span>
 
             </div>
 
 
+            {/* =================================================
+                FOOTER
+            ================================================= */}
 
-            {/* ========================================= */}
-            {/* FOOTER */}
-            {/* ========================================= */}
-
-            <div
-                className="mt-6 flex items-center justify-between"
-            >
-
-                {/* DELETE */}
+            <div className="
+                flex
+                items-center
+                justify-between
+                mt-5
+            ">
 
                 <button
+                    type="button"
                     onClick={handleDelete}
                     className="
-
-                    flex
-                    items-center
-                    gap-2
-                    text-red-500
-                    hover:text-red-600
-                    transition-all
-                    duration-300
-                    text-sm
-                    font-medium
-
+                        inline-flex
+                        items-center
+                        gap-1.5
+                        text-xs
+                        font-medium
+                        text-gray-400
+                        hover:text-red-600
+                        transition
                     "
                 >
 
-                    <Trash2 size={16} />
+                    <Trash2
+                        size={14}
+                        strokeWidth={1.8}
+                    />
 
                     Delete
 
                 </button>
 
 
-                {/* VIEW REPORT */}
-
                 <Link
-                    to={`/reports/${analysis._id}`}
+                    to={`/analysis/${analysis._id}`}
                     className="
-
-                    px-4
-                    py-2
-                    rounded-xl
-                    bg-slate-900
-                    hover:bg-slate-800
-                    text-white
-                    transition-all
-                    duration-300
-                    text-xs
-                    font-medium
-
+                        inline-flex
+                        items-center
+                        gap-1.5
+                        px-3
+                        py-2
+                        rounded-lg
+                        bg-gray-900
+                        text-white
+                        text-xs
+                        font-medium
+                        hover:bg-gray-800
+                        transition-all
                     "
                 >
-                    View Report
+
+                    View Analysis
+
+                    <ArrowUpRight
+                        size={14}
+                        strokeWidth={1.8}
+                    />
+
                 </Link>
 
             </div>
@@ -272,5 +389,6 @@ const AnalysisCard = ({
         </div>
     );
 };
+
 
 export default AnalysisCard;

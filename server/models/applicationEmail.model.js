@@ -23,40 +23,6 @@ const ApplicationEmailSchema =
 
 
             // =================================================
-            // RESUME
-            // =================================================
-
-            resumeId: {
-
-                type:
-                    mongoose.Schema.Types.ObjectId,
-
-                ref: "Resume",
-
-                required: true,
-
-                index: true
-            },
-
-
-            // =================================================
-            // RESUME ANALYSIS
-            // =================================================
-
-            analysisId: {
-
-                type:
-                    mongoose.Schema.Types.ObjectId,
-
-                ref: "ResumeAnalysis",
-
-                default: null,
-
-                index: true
-            },
-
-
-            // =================================================
             // APPLICATION DETAILS
             // =================================================
 
@@ -85,6 +51,20 @@ const ApplicationEmailSchema =
             // =================================================
 
             userRequest: {
+
+                type: String,
+
+                required: true,
+
+                trim: true
+            },
+
+
+            // =================================================
+            // GENERATED SUBJECT
+            // =================================================
+
+            subject: {
 
                 type: String,
 

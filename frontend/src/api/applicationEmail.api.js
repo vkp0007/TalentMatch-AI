@@ -1,42 +1,84 @@
 import apiClient from "./client";
 
 
-export const generateApplicationEmail = (
-    data
-) =>
-    apiClient.post(
-        "/application-emails",
-        data
+// =====================================================
+// CREATE APPLICATION EMAIL
+// =====================================================
+
+export const createApplicationEmail = ({
+    resumeId = null,
+    analysisId = null,
+    role = "",
+    jobUrl = "",
+    userRequest = ""
+}) => {
+
+    return apiClient.post(
+        "/application-email",
+        {
+            resumeId,
+            analysisId,
+            role,
+            jobUrl,
+            userRequest
+        }
     );
+};
 
 
-export const getApplicationEmails = () =>
-    apiClient.get(
-        "/application-emails"
+// =====================================================
+// GET USER APPLICATION EMAILS
+// =====================================================
+
+export const getApplicationEmails = () => {
+
+    return apiClient.get(
+        "/application-email"
     );
+};
 
+
+// =====================================================
+// GET SINGLE APPLICATION EMAIL
+// =====================================================
 
 export const getApplicationEmail = (
-    applicationId
-) =>
-    apiClient.get(
-        `/application-emails/${applicationId}`
-    );
+    applicationEmailId
+) => {
 
+    return apiClient.get(
+        `/application-email/${applicationEmailId}`
+    );
+};
+
+
+// =====================================================
+// REFINE APPLICATION EMAIL
+// =====================================================
 
 export const refineApplicationEmail = (
-    applicationId,
-    data
-) =>
-    apiClient.put(
-        `/application-emails/${applicationId}`,
-        data
-    );
+    applicationEmailId,
+    userRequest
+) => {
 
+    return apiClient.patch(
+        `/application-email/${applicationEmailId}/refine`,
+        {
+            userRequest
+        }
+    );
+};
+
+
+// =====================================================
+// DELETE APPLICATION EMAIL
+// =====================================================
 
 export const deleteApplicationEmail = (
-    applicationId
-) =>
-    apiClient.delete(
-        `/application-emails/${applicationId}`
+    applicationEmailId
+) => {
+
+    return apiClient.delete(
+        `/application-email/${applicationEmailId}`
     );
+};

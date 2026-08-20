@@ -4,8 +4,9 @@ import {
     getApplicationEmailByIdService,
     refineApplicationEmailService,
     deleteApplicationEmailService
-}
-from "../services/applicationEmail.service.js";
+} from "../services/applicationEmail.service.js";
+
+
 
 // =========================================================
 // CREATE APPLICATION EMAIL
@@ -19,9 +20,8 @@ export const createApplicationEmail =
             const userId =
                 req.user._id;
 
+
             const {
-                resumeId,
-                analysisId,
                 role,
                 jobUrl,
                 userRequest
@@ -32,10 +32,6 @@ export const createApplicationEmail =
                 await createApplicationEmailService({
 
                     userId,
-
-                    resumeId,
-
-                    analysisId,
 
                     role,
 
@@ -70,7 +66,9 @@ export const createApplicationEmail =
         }
     };
 
-    // =========================================================
+
+
+// =========================================================
 // GET ALL APPLICATION EMAILS
 // =========================================================
 
@@ -115,6 +113,7 @@ export const getUserApplicationEmails =
     };
 
 
+
 // =========================================================
 // GET SINGLE APPLICATION EMAIL
 // =========================================================
@@ -126,6 +125,7 @@ export const getApplicationEmailById =
 
             const userId =
                 req.user._id;
+
 
             const {
                 applicationEmailId
@@ -176,7 +176,8 @@ export const getApplicationEmailById =
     };
 
 
-    // =========================================================
+
+// =========================================================
 // REFINE APPLICATION EMAIL
 // =========================================================
 
@@ -188,9 +189,11 @@ export const refineApplicationEmailController =
             const userId =
                 req.user._id;
 
+
             const {
                 applicationEmailId
             } = req.params;
+
 
             const {
                 userRequest
@@ -233,7 +236,9 @@ export const refineApplicationEmailController =
         }
     };
 
-    // =========================================================
+
+
+// =========================================================
 // DELETE APPLICATION EMAIL
 // =========================================================
 
@@ -244,6 +249,7 @@ export const deleteApplicationEmail =
 
             const userId =
                 req.user._id;
+
 
             const {
                 applicationEmailId

@@ -1,7 +1,9 @@
 import {
     createInterviewChatService,
     sendInterviewMessageService,
-    getInterviewChatService
+    getInterviewChatService,
+    getUserInterviewChatsService,
+    deleteInterviewChatService
 } from "../services/interviewChat.service.js";
 
 
@@ -18,8 +20,7 @@ export const createInterviewChat =
                 req.user._id;
 
             const {
-                resumeId,
-                jobDescription
+                resumeId
             } = req.body;
 
 
@@ -28,9 +29,7 @@ export const createInterviewChat =
 
                     userId,
 
-                    resumeId,
-
-                    jobDescription
+                    resumeId
                 });
 
 
@@ -177,6 +176,116 @@ export const getInterviewChat =
                 message:
                     error.message ||
                     "Failed to get interview chat"
+            });
+        }
+    };
+
+
+// =========================================================
+// GET USER INTERVIEW CHATS
+// =========================================================
+
+export const getUserInterviewChats =
+    async (req, res) => {
+
+        try {
+
+            const userId =
+                req.user._id;
+
+
+            const chats =
+                await getUserInterviewChatsService({
+
+                    userId
+
+                });
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Interview chats retrieved successfully",
+
+                data:
+                    chats
+
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message ||
+                    "Failed to get interview chats"
+
+            });
+        }
+    };
+
+
+// =========================================================
+// DELETE INTERVIEW CHAT
+// =========================================================
+
+export const deleteInterviewChat =
+    async (req, res) => {
+
+        try {
+
+            const userId =
+                req.user._id;
+
+            const {
+                chatId
+            } = req.params;
+
+
+            const deletedChat =
+                await deleteInterviewChatService({
+
+                    userId,
+
+                    chatId
+                });
+
+
+            if (!deletedChat) {
+
+                return res.status(404).json({
+
+                    success: false,
+
+                    message:
+                        "Interview chat not found"
+                });
+            }
+
+
+            return res.status(200).json({
+
+                success: true,
+
+                message:
+                    "Interview chat deleted successfully"
+            });
+
+
+        } catch (error) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    error.message ||
+                    "Failed to delete interview chat"
             });
         }
     };

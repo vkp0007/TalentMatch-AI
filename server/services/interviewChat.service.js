@@ -15,84 +15,57 @@ import {
 
 export const createInterviewChatService = async ({
     userId,
-    resumeId,
-    jobDescription
+    resumeId
 }) => {
 
     try {
 
-        // =================================================
-        // VALIDATION
-        // =================================================
+        let resume = null;
+          if (resumeId) {
 
-        if (!resumeId) {
+            resume =
+                await Resume.findOne({
 
-            throw new Error(
-                "Resume ID is required"
-            );
+                    _id: resumeId,
+
+                    userId
+                });
+
+
+            if (!resume) {
+
+                throw new Error(
+                    "Resume not found"
+                );
+            }
+
+
+            if (
+                !resume.parsedData ||
+                Object.keys(
+                    resume.parsedData
+                ).length === 0
+            ) {
+
+                throw new Error(
+                    "Resume data not available"
+                );
+            }
         }
 
-        if (!jobDescription?.trim()) {
-
-            throw new Error(
-                "Job description is required"
-            );
-        }
-
-
-        // =================================================
-        // FIND RESUME
-        // =================================================
-
-        const resume =
-            await Resume.findOne({
-
-                _id: resumeId,
-
-                userId
-            });
-
-
-        if (!resume) {
-
-            throw new Error(
-                "Resume not found"
-            );
-        }
-
-
-        // =================================================
-        // VALIDATE RESUME DATA
-        // =================================================
-
-        if (
-            !resume.parsedData ||
-            Object.keys(
-                resume.parsedData
-            ).length === 0
-        ) {
-
-            throw new Error(
-                "Resume data not available"
-            );
-        }
-
-
-        // =================================================
-        // CREATE CHAT
-        // =================================================
 
         const chat =
             await InterviewChat.create({
 
                 userId,
 
-                resumeId,
-
-                jobDescription:
-                    jobDescription.trim(),
+                resumeId:
+                    resume
+                        ? resume._id
+                        : null,
 
                 messages: []
+
             });
 
 
@@ -134,6 +107,7 @@ export const sendInterviewMessageService =
                 );
             }
 
+
             if (!message?.trim()) {
 
                 throw new Error(
@@ -163,47 +137,53 @@ export const sendInterviewMessageService =
             }
 
 
+            let candidateData = null;
+
+
             // =================================================
-            // FIND RESUME
+            // OPTIONAL RESUME CONTEXT
             // =================================================
 
-            const resume =
-                await Resume.findOne({
+            if (chat.resumeId) {
 
-                    _id:
-                        chat.resumeId,
+                const resume =
+                    await Resume.findOne({
 
-                    userId
-                });
+                        _id:
+                            chat.resumeId,
+
+                        userId
+                    });
 
 
-            if (!resume) {
+                if (!resume) {
 
-                throw new Error(
-                    "Resume not found"
-                );
+                    throw new Error(
+                        "Resume not found"
+                    );
+                }
+
+
+                if (
+                    !resume.parsedData ||
+                    Object.keys(
+                        resume.parsedData
+                    ).length === 0
+                ) {
+
+                    throw new Error(
+                        "Resume data not available"
+                    );
+                }
+
+
+                candidateData =
+                    resume.parsedData;
             }
 
 
             // =================================================
-            // VALIDATE RESUME DATA
-            // =================================================
-
-            if (
-                !resume.parsedData ||
-                Object.keys(
-                    resume.parsedData
-                ).length === 0
-            ) {
-
-                throw new Error(
-                    "Resume data not available"
-                );
-            }
-
-
-            // =================================================
-            // GENERATE AI RESPONSE
+            // USER MESSAGE
             // =================================================
 
             const userMessage = {
@@ -214,6 +194,10 @@ export const sendInterviewMessageService =
                     message.trim()
             };
 
+
+            // =================================================
+            // CONVERSATION HISTORY
+            // =================================================
 
             const conversationHistory =
                 chat.messages.map(
@@ -229,14 +213,16 @@ export const sendInterviewMessageService =
                 );
 
 
+            // =================================================
+            // GENERATE AI RESPONSE
+            // =================================================
+
             const assistantResponse =
                 await generateInterviewChatResponse({
 
-                    candidateData:
-                        resume.parsedData,
+                    candidateData,
 
-                    jobDescription:
-                        chat.jobDescription,
+                    jobDescription: null,
 
                     messages: [
 
@@ -246,6 +232,29 @@ export const sendInterviewMessageService =
 
                     ]
                 });
+
+
+            if (!assistantResponse) {
+
+                throw new Error(
+                    "Failed to generate interview response"
+                );
+            }
+
+
+            // =================================================
+            // SET CHAT TITLE
+            // =================================================
+
+            if (
+                chat.messages.length === 0
+            ) {
+
+                chat.title =
+                    message
+                        .trim()
+                        .slice(0, 60);
+            }
 
 
             // =================================================
@@ -274,8 +283,16 @@ export const sendInterviewMessageService =
             });
 
 
+            // =================================================
+            // SAVE CHAT
+            // =================================================
+
             await chat.save();
 
+
+            // =================================================
+            // RESPONSE
+            // =================================================
 
             return {
 
@@ -300,11 +317,7 @@ export const sendInterviewMessageService =
             );
         }
     };
-
-
-// =========================================================
 // GET INTERVIEW CHAT
-// =========================================================
 
 export const getInterviewChatService =
     async ({
@@ -321,9 +334,7 @@ export const getInterviewChatService =
                 );
             }
 
-
-            const chat =
-                await InterviewChat.findOne({
+             const chat = await InterviewChat.findOne({
 
                     _id: chatId,
 
@@ -335,11 +346,67 @@ export const getInterviewChatService =
 
 
         } catch (error) {
+  throw new Error(
+              error.message || "Failed to get interview chat"
+            );
+        }
+    };
+
+
+// GET USER INTERVIEW CHATS
+
+export const getUserInterviewChatsService =
+    async ({
+        userId
+    }) => {
+
+        try {
+
+            const chats =
+                await InterviewChat.find({
+
+                    userId
+
+                })
+                .select(
+    "_id title resumeId createdAt updatedAt"
+)
+                .sort({
+
+                    updatedAt: -1
+
+                });
+
+
+            return chats;
+
+
+        } catch (error) {
 
             throw new Error(
 
                 error.message ||
-                "Failed to get interview chat"
+                "Failed to get interview chats"
             );
         }
     };
+
+// DELETE INTERVIEW CHAT
+// =========================================================
+
+export const deleteInterviewChatService = async ({
+    userId,
+    chatId
+}) => {
+
+    const deletedChat =
+        await InterviewChat.findOneAndDelete({
+
+            _id: chatId,
+
+            userId
+        });
+
+
+    return deletedChat;
+};

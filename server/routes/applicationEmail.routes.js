@@ -1,13 +1,14 @@
 import express from "express";
 
+
 import {
     createApplicationEmail,
     getUserApplicationEmails,
     getApplicationEmailById,
     refineApplicationEmailController,
     deleteApplicationEmail
-}
-from "../controllers/applicationEmail.controller.js";
+} from "../controllers/applicationEmail.controller.js";
+
 
 import {
     protect
@@ -17,11 +18,21 @@ import {
 const router =
     express.Router();
 
+
+// =========================================================
+// CREATE APPLICATION EMAIL
+// =========================================================
+
 router.post(
     "/",
     protect,
     createApplicationEmail
 );
+
+
+// =========================================================
+// GET ALL APPLICATION EMAILS
+// =========================================================
 
 router.get(
     "/",
@@ -30,11 +41,20 @@ router.get(
 );
 
 
+// =========================================================
+// GET SINGLE APPLICATION EMAIL
+// =========================================================
+
 router.get(
     "/:applicationEmailId",
     protect,
     getApplicationEmailById
 );
+
+
+// =========================================================
+// REFINE APPLICATION EMAIL
+// =========================================================
 
 router.patch(
     "/:applicationEmailId/refine",
@@ -42,10 +62,16 @@ router.patch(
     refineApplicationEmailController
 );
 
+
+// =========================================================
+// DELETE APPLICATION EMAIL
+// =========================================================
+
 router.delete(
     "/:applicationEmailId",
     protect,
     deleteApplicationEmail
 );
+
 
 export default router;

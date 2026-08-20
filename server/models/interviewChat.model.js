@@ -23,7 +23,7 @@ const InterviewChatSchema =
 
 
             // =================================================
-            // RESUME
+            // OPTIONAL RESUME CONTEXT
             // =================================================
 
             resumeId: {
@@ -33,21 +33,22 @@ const InterviewChatSchema =
 
                 ref: "Resume",
 
-                required: true,
+                default: null,
 
                 index: true
             },
 
 
             // =================================================
-            // JOB DESCRIPTION
+            // CHAT TITLE
             // =================================================
 
-            jobDescription: {
+            title: {
 
                 type: String,
 
-                required: true,
+                default:
+                    "New Interview Chat",
 
                 trim: true
             },
@@ -74,6 +75,7 @@ const InterviewChatSchema =
 
                             required: true
                         },
+
 
                         content: {
 

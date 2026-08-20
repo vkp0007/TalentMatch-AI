@@ -29,113 +29,210 @@ export const generateReferralDraft = async ({
     recipientName,
     companyName,
     role,
-    matchedSkills = [],
-    customContext = "",
-    resumeData = {}
+    jobUrl,
+    customContext = ""
 }) => {
 
     try {
+
+        // =====================================================
+        // VALIDATION
+        // =====================================================
+
+        if (!companyName?.trim()) {
+
+            throw new Error(
+                "Company name is required"
+            );
+        }
+
+
+        if (!role?.trim()) {
+
+            throw new Error(
+                "Role is required"
+            );
+        }
+
+
+        if (!jobUrl?.trim()) {
+
+            throw new Error(
+                "Job URL is required"
+            );
+        }
+
+
+        if (!customContext?.trim()) {
+
+            throw new Error(
+                "Referral context is required"
+            );
+        }
+
+
+        // =====================================================
+        // PROMPT
+        // =====================================================
 
         const prompt = `
 
 You are an AI assistant helping a candidate write a professional
 referral request.
 
-Generate a natural, concise referral message.
+Generate one natural, concise referral message.
 
-The message should follow this general structure:
+The message should generally contain:
 
 1. Greeting
-2. Mention the company and role
-3. Brief candidate introduction
-4. Highlight relevant skills, projects, or achievements
-5. Mention the candidate's interest
-6. Politely ask for a referral
+2. Mention of the company and role
+3. Brief candidate introduction based ONLY on the provided context
+4. Relevant information from the user's context
+5. Expression of interest in the opportunity
+6. A polite referral request
 7. Professional closing
+
 
 IMPORTANT RULES:
 
-- Adapt the message to the candidate.
-- Use the user's custom context when relevant.
-- Prioritize skills relevant to the target role.
-- You may mention relevant projects or achievements from the resume.
-- Do NOT invent any skills, projects, achievements, education,
-  employment, or experience.
-- Do NOT claim professional experience if the candidate is a fresher.
+- Use the user's custom context as the primary source for candidate information.
+- Adapt the message naturally to the provided information.
+- Do NOT invent skills, projects, achievements, education,
+  employment, experience, qualifications, or certifications.
+- Do NOT claim professional experience unless explicitly provided.
+- Do NOT exaggerate the candidate's qualifications.
 - Do NOT mention missing skills.
-- Do NOT exaggerate qualifications.
-- Do NOT include a subject line.
+- Do NOT invent a relationship between the candidate and recipient.
+- Do NOT invent facts about the company.
+- Do NOT claim that the candidate researched, admired, liked,
+  or was impressed by the company unless explicitly stated.
+- Do NOT add generic company praise.
+- Do NOT add a subject line.
+- Do NOT include the job URL as a separate line unless it naturally
+  fits the referral request.
 - Keep the message concise.
 - Make it sound like a real person wrote it.
-- Avoid generic AI-generated phrases.
-- Return ONLY the referral message.
+- Avoid unnecessary corporate language.
+- Avoid generic AI phrases.
+- Do not use markdown.
+- Return ONLY the complete referral message.
+
 
 RECIPIENT:
-${recipientName || "there"}
+${recipientName?.trim() || "there"}
+
 
 COMPANY:
-${companyName}
+${companyName.trim()}
+
 
 ROLE:
-${role}
+${role.trim()}
 
-MATCHED SKILLS:
-${matchedSkills.length
-                ? matchedSkills.join(", ")
-                : "None provided"}
+
+JOB URL:
+${jobUrl.trim()}
+
 
 USER CONTEXT:
-${customContext || "None provided"}
-
-CANDIDATE RESUME DATA:
-${JSON.stringify(resumeData)}
+${customContext.trim()}
 
 `;
 
 
-        const completion =
-            await groq.chat.completions.create({
+        // =====================================================
+        // GROQ REQUEST
+        // =====================================================
 
-                model: MODEL,
+    const completion =
+    await groq.chat.completions.create({
 
-                messages: [
+        model: MODEL,
 
-                    {
-                        role: "system",
+        messages: [
 
-                        content:
-                            "Write natural, concise and honest professional referral requests."
-                    },
+            {
+                role: "system",
 
-                    {
-                        role: "user",
+                content:
+                    "Write a natural, concise and honest professional referral request. Return only the final message."
+            },
 
-                        content: prompt
-                    }
+            {
+                role: "user",
 
-                ],
+                content: prompt
+            }
 
-                temperature: 0.4,
+        ],
 
-                max_tokens: 400
-            });
+        temperature: 0.3,
+
+        max_tokens: 1000,
+
+        reasoning_effort: "low"
+    });
+
+        // =====================================================
+        // DEBUG
+        // =====================================================
+
+        console.log(
+            "Groq referral generation choices:",
+            completion?.choices?.length || 0
+        );
 
 
-        const draft =
+        console.log(
+            "Groq referral generation finish reason:",
+            completion
+                ?.choices?.[0]
+                ?.finish_reason
+        );
+
+
+        // =====================================================
+        // EXTRACT RESPONSE
+        // =====================================================
+
+        const rawContent =
             completion
                 ?.choices?.[0]
                 ?.message
-                ?.content
-                ?.trim();
+                ?.content;
 
+
+        const draft =
+            typeof rawContent === "string"
+                ? rawContent.trim()
+                : "";
+
+
+        // =====================================================
+        // VALIDATE RESPONSE
+        // =====================================================
 
         if (!draft) {
+
+            console.error(
+                "Groq returned no referral content:",
+                JSON.stringify(
+                    completion,
+                    null,
+                    2
+                )
+            );
+
 
             throw new Error(
                 "Groq returned an empty referral draft"
             );
         }
 
+
+        // =====================================================
+        // RETURN
+        // =====================================================
 
         return draft;
 
@@ -144,10 +241,12 @@ ${JSON.stringify(resumeData)}
 
         console.error(
             "Groq referral generation error:",
-            error.message
+            error
         );
 
+
         throw new Error(
+            error.message ||
             "Failed to generate referral draft"
         );
     }
@@ -164,12 +263,15 @@ export const refineReferralDraft = async ({
     recipientName,
     companyName,
     role,
-    matchedSkills = [],
-    resumeData = {},
+    jobUrl,
     customContext = ""
 }) => {
 
     try {
+
+        // =====================================================
+        // VALIDATION
+        // =====================================================
 
         if (!currentDraft?.trim()) {
 
@@ -187,149 +289,174 @@ export const refineReferralDraft = async ({
         }
 
 
+        // =====================================================
+        // PROMPT
+        // =====================================================
+
         const prompt = `
 
-You are editing an existing referral request.
+You are an expert professional message editor.
 
-The user wants to modify the existing message.
+Your task is to modify an existing referral request according
+to the user's instruction.
 
 CURRENT REFERRAL DRAFT:
 ${currentDraft}
 
-USER REQUEST:
+USER'S REQUEST:
 ${instruction}
 
-JOB INFORMATION:
+REFERENCE INFORMATION:
+
+Recipient:
+${recipientName || "Not provided"}
 
 Company:
-${companyName}
+${companyName || "Not provided"}
 
 Role:
-${role}
+${role || "Not provided"}
 
-MATCHED SKILLS:
-${matchedSkills.length
-                ? matchedSkills.join(", ")
-                : "None provided"}
+Job URL:
+${jobUrl || "Not provided"}
 
-USER CONTEXT:
-${customContext || "None provided"}
-
-CANDIDATE RESUME DATA:
-${JSON.stringify(resumeData)}
-
-The CURRENT REFERRAL DRAFT is the source of truth.
-
-Your task is to make a minimal, targeted modification to the existing draft based ONLY on the USER REQUEST.
-
-Do not improve or rewrite any part of the draft that is unrelated to the user's request.
+User Context:
+${customContext || "Not provided"}
 
 
-EDITING RULES:
+EDITING INSTRUCTIONS:
 
-- Modify the existing draft according to the user's request.
-- Preserve the overall referral-request purpose.
-- Preserve the existing structure, wording, tone, and information whenever possible.
-- Keep the message concise.
-- Apply ONLY the changes explicitly requested by the user.
-- Any information not directly affected by the user's request MUST remain unchanged.
-- Make the smallest reasonable edit necessary to satisfy the user's request.
-- Do NOT rewrite or regenerate the entire message unless the user explicitly asks for a rewrite.
-- Do NOT make additional improvements, optimizations, or stylistic changes that the user did not request.
-
-CHANGE SCOPE:
-
-Determine exactly what the user wants to change.
-
-- If the request concerns an achievement, modify achievement content only.
-- If the request concerns a project, modify project content only.
-- If the request concerns skills, modify skill content only.
-- If the request concerns education, modify education content only.
-- If the request concerns experience, modify experience content only.
-- If the request concerns tone, modify tone while preserving the existing information.
-- If the request concerns length, change the length while preserving the existing information.
-- If the request concerns removal, remove ONLY the requested content.
-
-UNRELATED CONTENT:
-
-- Do not modify unrelated skills.
-- Do not modify unrelated projects.
-- Do not modify unrelated achievements.
-- Do not modify education or experience unless requested.
-- Do not reorder existing skills unless requested.
-- Do not replace an existing project unless requested.
-- Do not add new information unless requested.
-- Do not remove existing information unless requested.
-
-CANDIDATE INFORMATION:
-
-- If the user asks to add a project, use only projects actually present in the candidate data.
-- If the user asks to add an achievement, use only achievements actually present in the candidate data.
-- If the user asks to add a skill, verify that the skill exists in the candidate data or matched skills.
-- If the requested project, achievement, or skill cannot be verified from the candidate data, do not invent it.
-- Never invent a project, achievement, skill, education, employment, experience, qualification, or certification.
-- Never claim professional experience unless supported by the candidate data.
-- Do not mention missing skills.
-
-COMPANY AND ROLE:
-
-- Do not make claims about the company, recipient, or their work unless explicitly provided by the user.
-- Do not claim that the candidate researched, admired, liked, or was impressed by the company unless explicitly provided by the user.
-- Do not introduce unsupported claims about the company, recipient, role, or candidate.
-- Do not add generic company praise or personalization.
-
-FORMAT:
-
-- Preserve the existing greeting and closing unless the user asks to change them.
+- Modify the existing referral draft according to the user's request.
+- Return the COMPLETE revised referral message.
+- Preserve information from the original draft unless the user
+  explicitly asks you to change or remove it.
+- Preserve the existing greeting and closing unless the user
+  explicitly asks to change them.
+- Keep the message professional and concise.
+- If the user asks to make it shorter, actually shorten it.
+- If the user asks to make it more casual, adjust the tone accordingly.
+- If the user asks to make it more professional, adjust the tone accordingly.
+- If the user asks to change a specific sentence or section, change it.
+- If the user asks for a rewrite, rewrite the complete message.
 - Do not add a subject line.
-- Return ONLY the revised referral message.
+- Do not add explanations before or after the message.
+- Do not use markdown.
+- Do not return JSON.
+
+
+INFORMATION SAFETY:
+
+- Do not invent skills, projects, achievements, education,
+  employment, experience, qualifications, or certifications.
+- Do not invent facts about the company or recipient.
+- Do not add company praise unless it already exists in the
+  original draft or was explicitly requested.
+- Do not introduce unsupported claims.
+- Do not add information merely because it sounds professional.
+- Only use information available in the current draft,
+  reference information, or user's instruction.
+
+
+OUTPUT:
+
+Return ONLY the complete revised referral message.
 
 `;
 
 
-        const completion =
-            await groq.chat.completions.create({
+        // =====================================================
+        // GROQ
+        // =====================================================
 
-                model: MODEL,
+    const completion =
+    await groq.chat.completions.create({
 
-                messages: [
+        model: MODEL,
 
-                    {
-                        role: "system",
+        messages: [
 
-                        content:
-                            "You carefully edit existing professional messages without inventing candidate information."
-                    },
+            {
+                role: "system",
 
-                    {
-                        role: "user",
+                content:
+                    "You are a precise professional message editor. Return only the revised message."
+            },
 
-                        content: prompt
-                    }
+            {
+                role: "user",
 
-                ],
+                content: prompt
+            }
 
-                temperature: 0.3,
+        ],
 
-                max_tokens: 500
-            });
+        temperature: 0.3,
+
+        max_tokens: 1000,
+
+        reasoning_effort: "low"
+    });
+
+        // =====================================================
+        // DEBUG RESPONSE
+        // =====================================================
+
+        console.log(
+            "Groq refinement choices:",
+            completion?.choices?.length || 0
+        );
 
 
-        const updatedDraft =
+        console.log(
+            "Groq refinement finish reason:",
+            completion
+                ?.choices?.[0]
+                ?.finish_reason
+        );
+
+
+        // =====================================================
+        // EXTRACT RESPONSE
+        // =====================================================
+
+        const rawContent =
             completion
                 ?.choices?.[0]
                 ?.message
-                ?.content
-                ?.trim();
+                ?.content;
 
+
+        const updatedDraft =
+            typeof rawContent === "string"
+                ? rawContent.trim()
+                : "";
+
+
+        // =====================================================
+        // VALIDATE RESPONSE
+        // =====================================================
 
         if (!updatedDraft) {
+
+            console.error(
+                "Groq returned no usable content:",
+                JSON.stringify(
+                    completion,
+                    null,
+                    2
+                )
+            );
+
 
             throw new Error(
                 "Groq returned an empty updated draft"
             );
         }
 
+
+        // =====================================================
+        // RETURN
+        // =====================================================
 
         return updatedDraft;
 
@@ -338,22 +465,23 @@ FORMAT:
 
         console.error(
             "Groq referral refinement error:",
-            error.message
+            error
         );
 
+
         throw new Error(
+            error.message ||
             "Failed to update referral draft"
         );
     }
 };
+
 
 // =========================================================
 // GENERATE APPLICATION EMAIL
 // =========================================================
 
 export const generateApplicationEmail = async ({
-    candidateData,
-    jdProfile,
     role,
     jobUrl,
     userRequest
@@ -369,105 +497,62 @@ ${role}
 JOB URL:
 ${jobUrl || ""}
 
-JOB REQUIREMENTS:
-${JSON.stringify(jdProfile, null, 2)}
-
-CANDIDATE DATA:
-${JSON.stringify(candidateData, null, 2)}
-
 USER REQUEST:
 ${userRequest}
 
+
 GENERATION RULES:
 
-SOURCE OF TRUTH:
-
-- Candidate data is the source of truth for all candidate-related facts.
-- Use the user's request to determine what information to emphasize or
-  include in the email.
-- Use only candidate information supported by the candidate data.
-- If a requested detail is not supported by candidate data, omit it naturally.
-- Never mention that information was omitted, unsupported, unavailable,
-  or not found.
-- Never explain or discuss the user's request in the generated email.
-
-
-CANDIDATE INFORMATION:
-
-- If education is requested or relevant to the role, use only education
-  supported by candidate data.
-- If skills are requested or relevant to the role, use only skills
-  supported by candidate data.
-- If a project is requested, use only projects supported by candidate data.
-- If an achievement is requested, use only achievements supported by
-  candidate data.
-- If experience is requested, use only experience explicitly supported by
-  candidate data.
-- If availability or immediate joining is requested, mention it naturally.
-- Never assume availability, joining timeline, notice period, location,
-  or other personal details.
-
-- Never invent skills, projects, achievements, education, employment,
-  experience, certifications, qualifications, or other candidate details.
-- Never claim professional experience unless explicitly supported by
-  candidate data.
-- Never imply that academic projects are professional employment.
-- Do not mention missing skills.
-- Do not claim that the candidate satisfies a job requirement unless
-  supported by candidate data.
-
-
-PROJECTS AND SKILLS:
-
-- Do not associate a skill with a specific project unless the candidate
-  data explicitly establishes that relationship.
-- Do not change the factual meaning of project descriptions.
-- Do not infer abilities, strengths, leadership, teamwork, innovation,
-  problem-solving, or other qualities from projects or achievements unless
-  explicitly supported by candidate data.
-- Do not add claims merely to make the email sound stronger.
-
-
-FRESHER / EXPERIENCE:
-
-- For a fresher, use terms such as "technical skills", "technical
-  background", "academic background", or "projects".
-- Do not use "professional experience" unless supported by candidate data.
-- Do not use phrases such as "my skills and experience" when professional
-  experience is not supported.
-- Do not describe the candidate as experienced unless supported by
-  candidate data.
-
-
-COMPANY / JOB:
-
-- Do not make unsupported claims about the company, recipient, hiring team,
-  or workplace.
-- Do not claim that the candidate researched, admired, liked, or was
-  impressed by the company unless explicitly provided by the user.
-- Do not claim that the candidate is a good fit unless supported by the
-  provided information.
-- Do not include the job URL in the email body unless the user explicitly
-  asks for it.
-- Never expose raw URLs unnecessarily.
+- Generate a concise and professional job application email.
+- The email must be based ONLY on the role, job URL, and user's request.
+- Do not invent candidate skills, projects, achievements, education,
+  employment, experience, certifications, qualifications, or personal
+  information.
+- Do not assume the candidate is experienced.
+- Do not claim the candidate is a good fit unless the user explicitly
+  states or supports it.
+- Do not make unsupported claims about the company, hiring team, or role.
+- Do not claim that the candidate researched, admired, or was impressed
+  by the company.
+- Do not mention missing information.
+- Do not mention the job URL in the email body unless explicitly
+  requested.
+- Do not expose raw URLs unnecessarily.
 
 
 EMAIL STRUCTURE:
 
-- Preserve the overall purpose of applying for the specified role.
 - Use a professional greeting such as "Dear Hiring Manager,".
-- Keep the email concise and focused, preferably 2–3 short paragraphs.
-- Prioritize information explicitly requested by the user.
-- Do not automatically include every skill, project, achievement, education
-  detail, or JD requirement.
+- Clearly mention the specified role.
+- Use the user's request to determine what should be emphasized.
+- Keep the email concise, preferably 2–3 short paragraphs.
 - Always mention that the resume is attached.
-- End with "Best regards," followed by the candidate's name when available.
-- Do not add a subject line.
-- Return ONLY the email body.
+- End with "Best regards,".
+- Do not include a subject line inside the email body.
 
 
+SUBJECT:
 
+- Generate a concise professional email subject.
+- The subject should clearly indicate that this is a job application.
+- Include the role when appropriate.
+- Do not use clickbait or exaggerated wording.
+- Do not include the job URL.
+- Keep the subject short.
+
+
+RETURN FORMAT:
+
+Return ONLY valid JSON.
+
+Use exactly this structure:
+
+{
+    "subject": "string",
+    "email": "string"
+}
 `;
+
 
     try {
 
@@ -481,23 +566,79 @@ EMAIL STRUCTURE:
                 messages: [
 
                     {
+                        role: "system",
+
+                        content:
+                            "Generate concise, professional job application emails and subjects. Return only the requested JSON."
+                    },
+
+                    {
                         role: "user",
+
                         content: prompt
                     }
 
                 ],
 
-                temperature: 0.3
+                temperature: 0.3,
+
+                response_format: {
+                    type: "json_object"
+                }
             });
 
 
-        return (
+        const content =
             completion
-                .choices?.[0]
+                ?.choices?.[0]
                 ?.message
                 ?.content
-                ?.trim() || ""
-        );
+                ?.trim();
+
+
+        if (!content) {
+
+            throw new Error(
+                "Groq returned an empty application email response"
+            );
+        }
+
+
+        const result =
+            JSON.parse(content);
+
+
+        const subject =
+            result?.subject?.trim();
+
+
+        const email =
+            result?.email?.trim();
+
+
+        if (!subject) {
+
+            throw new Error(
+                "Groq returned an empty email subject"
+            );
+        }
+
+
+        if (!email) {
+
+            throw new Error(
+                "Groq returned an empty email body"
+            );
+        }
+
+
+        return {
+
+            subject,
+
+            email
+        };
+
 
     } catch (error) {
 
@@ -506,6 +647,7 @@ EMAIL STRUCTURE:
             error.message
         );
 
+
         throw new Error(
             "Failed to generate application email"
         );
@@ -513,13 +655,14 @@ EMAIL STRUCTURE:
 };
 
 
-// REFINE APPLICATION EMAIL
 
+// =========================================================
+// REFINE APPLICATION EMAIL
+// =========================================================
 
 export const refineApplicationEmail = async ({
+    currentSubject,
     currentEmail,
-    candidateData,
-    jdProfile,
     role,
     jobUrl,
     userRequest
@@ -527,6 +670,9 @@ export const refineApplicationEmail = async ({
 
     const prompt = `
 You are editing an existing job application email.
+
+CURRENT SUBJECT:
+${currentSubject || ""}
 
 CURRENT EMAIL:
 ${currentEmail}
@@ -537,55 +683,57 @@ ${role}
 JOB URL:
 ${jobUrl || ""}
 
-JOB REQUIREMENTS:
-${JSON.stringify(jdProfile, null, 2)}
-
-CANDIDATE DATA:
-${JSON.stringify(candidateData, null, 2)}
-
 USER REQUEST:
 ${userRequest}
 
+
 EDITING RULES:
 
-- Modify the existing email according to the user's request.
+- Modify the existing subject and email according to the user's request.
 - Preserve the overall purpose of the job application.
-- Preserve the existing structure and natural professional tone.
+- Preserve the existing structure, wording, and professional tone
+  whenever possible.
 - Keep the email concise.
 - Apply ONLY the changes requested by the user.
-- Preserve sentences and information unrelated to the request.
-- Do not rewrite the entire email unless explicitly requested.
+- Preserve information unrelated to the request.
+- Do not rewrite the entire email unless the user explicitly asks
+  for a complete rewrite.
+- Do not invent candidate information.
+- Do not invent skills, projects, achievements, education, employment,
+  experience, certifications, qualifications, or personal information.
+- Do not make unsupported claims about the company, hiring team, or role.
+- Do not claim that the candidate is a good fit unless explicitly
+  supported by the existing email or user request.
+- Do not add generic company praise.
+- Do not add a job URL to the email unless explicitly requested.
+- Always preserve the resume attachment statement unless the user
+  explicitly asks to remove it.
+- Do not add unnecessary information.
+- Do not add a subject line inside the email body.
 
-- If the user asks to add a project, use only projects in candidate data.
-- If the user asks to add an achievement, use only achievements in candidate data.
-- If the user asks to add a skill, verify it exists in candidate data.
-- If the requested information cannot be verified, do not invent it.
 
-- Never invent skills, projects, achievements, education, employment,
-  experience, certifications, or qualifications.
-- Never claim professional experience unless supported by candidate data.
-- Do not mention missing skills.
+SUBJECT RULES:
 
-- Do not infer abilities, strengths, qualities, or characteristics from
-  a project or achievement unless explicitly supported by candidate data.
-- Do not turn participation in a hackathon, competition, event, or project
-  into claims about leadership, teamwork, innovation, problem-solving, or
-  other abilities unless explicitly supported.
+- Preserve the existing subject if the user's request does not require
+  changing it.
+- If the user asks to change the subject, generate a concise professional
+  subject relevant to the specified role.
+- Do not include the job URL.
+- Do not use exaggerated or promotional language.
 
-- Do not use generic phrases such as "my skills and experience" when
-  professional experience is not supported by candidate data.
-- If the candidate is a fresher, prefer terms such as "skills",
-  "technical background", "academic background", or "projects" instead
-  of implying professional experience.
 
-- Do not make unsupported claims about the company or hiring team.
-- Do not claim that the candidate satisfies a requirement unless supported.
-- Preserve the role and application purpose.
-- Always preserve the resume attachment statement.
-- Do not add a subject line.
-- Return ONLY the revised email body.
+RETURN FORMAT:
 
+Return ONLY valid JSON.
+
+Use exactly this structure:
+
+{
+    "subject": "string",
+    "email": "string"
+}
 `;
+
 
     try {
 
@@ -597,23 +745,81 @@ EDITING RULES:
                     "llama-3.3-70b-versatile",
 
                 messages: [
+
+                    {
+                        role: "system",
+
+                        content:
+                            "Carefully edit professional job application emails. Preserve unrelated content and return only valid JSON."
+                    },
+
                     {
                         role: "user",
+
                         content: prompt
                     }
+
                 ],
 
-                temperature: 0.2
+                temperature: 0.2,
+
+                response_format: {
+                    type: "json_object"
+                }
             });
 
 
-        return (
+        const content =
             completion
-                .choices?.[0]
+                ?.choices?.[0]
                 ?.message
                 ?.content
-                ?.trim() || ""
-        );
+                ?.trim();
+
+
+        if (!content) {
+
+            throw new Error(
+                "Groq returned an empty refinement response"
+            );
+        }
+
+
+        const result =
+            JSON.parse(content);
+
+
+        const subject =
+            result?.subject?.trim();
+
+
+        const email =
+            result?.email?.trim();
+
+
+        if (!subject) {
+
+            throw new Error(
+                "Groq returned an empty refined subject"
+            );
+        }
+
+
+        if (!email) {
+
+            throw new Error(
+                "Groq returned an empty refined email"
+            );
+        }
+
+
+        return {
+
+            subject,
+
+            email
+        };
+
 
     } catch (error) {
 
@@ -622,22 +828,26 @@ EDITING RULES:
             error.message
         );
 
+
         throw new Error(
             "Failed to refine application email"
         );
     }
 };
-
 // =========================================================
 // GENERATE RECOMMENDATIONS
 // =========================================================
-
 export const generateRecommendations = async ({
     candidateData,
     jdProfile,
+    semanticScore,
+    skillScore,
+    finalScore,
     matchedSkills,
     missingSkills,
-    additionalSkills
+    additionalSkills,
+    educationMatch,
+    experienceMatch
 }) => {
 
     const prompt = `
@@ -652,6 +862,25 @@ ${JSON.stringify(candidateData, null, 2)}
 
 JOB DESCRIPTION PROFILE:
 ${JSON.stringify(jdProfile, null, 2)}
+
+
+RESUME ANALYSIS SCORES:
+
+Semantic Score:
+${semanticScore ?? 0}
+
+Skill Score:
+${skillScore ?? 0}
+
+Final Score:
+${finalScore ?? 0}
+
+Education Match:
+${educationMatch ?? "Not available"}
+
+Experience Match:
+${experienceMatch ?? "Not available"}
+
 
 MATCHED SKILLS:
 ${JSON.stringify(matchedSkills, null, 2)}
@@ -669,27 +898,61 @@ RECOMMENDATION RULES:
   ResumeAnalysis results.
 
 - Use missingSkills to determine skills the candidate should study.
-- Give higher priority to required missing skills than preferred missing
-  skills.
-- Do not recommend studying skills that are already matched unless there
-  is a clear advanced-learning reason.
+
+- Give higher priority to required missing skills than preferred
+  missing skills.
+
+- Do not recommend studying skills that are already matched unless
+  there is a clear advanced-learning reason.
+
+- Consider the semantic score, skill score, final score, education match,
+  and experience match when deciding what recommendations are most useful.
 
 - For resume improvements, recommend only existing candidate information
   that should be highlighted for this specific JD.
-- Do not recommend adding information that does not already exist in the
-  candidate data.
-- Do not describe academic or personal projects as professional experience.
+
+- Do not recommend adding information that does not already exist in
+  the candidate data.
+
+- Do not describe academic or personal projects as professional
+  experience.
+
 - Use "project work", "hands-on work", or similar wording instead.
 
 - Do not infer abilities, strengths, leadership, teamwork, innovation,
-  problem-solving, or other qualities from projects or achievements unless
-  explicitly supported by candidate data.
+  problem-solving, or other qualities from projects or achievements
+  unless explicitly supported by candidate data.
 
 - For achievements, explain why the achievement is relevant to the resume
   without making unsupported claims about the candidate.
 
 - Recommendations should tell the candidate WHAT to do and WHY.
+
 - Keep each recommendation concise and practical.
+
+
+IMPORTANT RULE FOR resumeImprovements:
+
+The "type" field MUST be exactly one of these four values:
+
+"skill"
+"project"
+"achievement"
+"education"
+
+Do NOT use:
+
+"training"
+"experience"
+"certification"
+"course"
+"format"
+
+Do not invent any other type.
+
+If an item does not clearly belong to one of the four allowed types,
+do not include it in resumeImprovements.
+
 
 RETURN ONLY VALID JSON.
 
@@ -715,14 +978,14 @@ Use exactly this structure:
 }
 `;
 
+
     try {
 
         const completion =
             await groq.chat.completions.create({
 
                 model:
-                    process.env.GROQ_MODEL ||
-                    "llama-3.3-70b-versatile",
+                    MODEL,
 
                 messages: [
                     {
@@ -755,7 +1018,140 @@ Use exactly this structure:
         }
 
 
-        return JSON.parse(content);
+        const result =
+            JSON.parse(content);
+
+
+        // =====================================================
+        // VALID VALUES
+        // =====================================================
+
+        const validPriorities = [
+            "high",
+            "medium",
+            "low"
+        ];
+
+
+        const validImprovementTypes = [
+            "skill",
+            "project",
+            "achievement",
+            "education"
+        ];
+
+
+        // =====================================================
+        // VALIDATE SKILLS TO STUDY
+        // =====================================================
+
+        const skillsToStudy =
+            Array.isArray(
+                result.skillsToStudy
+            )
+                ? result.skillsToStudy
+                    .filter(item =>
+                        item &&
+                        typeof item.skill === "string"
+                    )
+                    .map(item => ({
+
+                        skill:
+                            item.skill.trim(),
+
+                        reason:
+                            typeof item.reason === "string"
+                                ? item.reason.trim()
+                                : "",
+
+                        priority:
+                            validPriorities.includes(
+                                item.priority
+                            )
+                                ? item.priority
+                                : "medium",
+
+                        topics:
+                            Array.isArray(
+                                item.topics
+                            )
+                                ? item.topics
+                                    .filter(
+                                        topic =>
+                                            typeof topic === "string"
+                                    )
+                                    .map(
+                                        topic =>
+                                            topic.trim()
+                                    )
+                                : []
+
+                    }))
+                    .slice(0, 8)
+                : [];
+
+
+        // =====================================================
+        // VALIDATE RESUME IMPROVEMENTS
+        // =====================================================
+
+        const resumeImprovements =
+            Array.isArray(
+                result.resumeImprovements
+            )
+                ? result.resumeImprovements
+                    .filter(item => {
+
+                        if (
+                            !item ||
+                            typeof item.item !== "string"
+                        ) {
+
+                            return false;
+                        }
+
+
+                        return validImprovementTypes.includes(
+                            item.type
+                        );
+
+                    })
+                    .map(item => ({
+
+                        type:
+                            item.type,
+
+                        item:
+                            item.item.trim(),
+
+                        reason:
+                            typeof item.reason === "string"
+                                ? item.reason.trim()
+                                : "",
+
+                        priority:
+                            validPriorities.includes(
+                                item.priority
+                            )
+                                ? item.priority
+                                : "medium"
+
+                    }))
+                    .slice(0, 6)
+                : [];
+
+
+        // =====================================================
+        // RETURN CLEAN DATA
+        // =====================================================
+
+        return {
+
+            skillsToStudy,
+
+            resumeImprovements
+
+        };
 
 
     } catch (error) {
@@ -764,6 +1160,7 @@ Use exactly this structure:
             "Recommendation Generation Error:",
             error.message
         );
+
 
         throw new Error(
             "Failed to generate recommendations"
@@ -782,16 +1179,31 @@ export const generateInterviewChatResponse = async ({
 }) => {
 
     const systemPrompt = `
-You are an AI Interview Coach.
 
-Your job is to help the candidate prepare for a job interview using
-their resume and the provided job description.
+Your job is to act as an AI Interview Coach.
+
+Help the user with interview preparation, technical concepts,
+interview questions, answer evaluation, projects, career preparation,
+and other reasonable questions they ask.
+
+A resume and job description may be provided as optional context.
+Use them when available, but never require them.
+
+
 
 CANDIDATE DATA:
-${JSON.stringify(candidateData, null, 2)}
+${
+    candidateData
+        ? JSON.stringify(candidateData, null, 2)
+        : "No resume has been attached. Do not make assumptions about the candidate's background."
+}
 
 JOB DESCRIPTION:
-${jobDescription}
+${
+    jobDescription?.trim()
+        ? jobDescription
+        : "No job description has been provided. Answer general interview and technical questions using general knowledge."
+}
 
 RULES:
 
@@ -958,6 +1370,14 @@ RESPONSE LENGTH:
 - Do not automatically provide extensive examples.
 - Do not automatically ask another question.
 
+RESPONSE FORMATTING:
+
+- Do not use Markdown formatting.
+- Do not use asterisks (*) for bold or italic text.
+- Do not use backticks.
+- Use plain text only.
+- Use simple numbered lists when appropriate.
+
 IMPROVED ANSWERS:
 
 - Keep improved interview answers concise and interview-ready.
@@ -1066,7 +1486,7 @@ TOPIC EXPLANATIONS:
 
                 temperature: 0.4,
 
-                max_tokens: 350
+                max_tokens: 600
 
             });
 
@@ -1085,9 +1505,13 @@ TOPIC EXPLANATIONS:
                 "Empty interview coach response"
             );
         }
+        const cleanContent =
+    content
+        .replace(/\*\*/g, "")
+        .replace(/\*/g, "");
 
 
-        return content;
+        return cleanContent;
 
 
     } catch (error) {

@@ -38,5 +38,5 @@ export const getResume = (
     resumeId
 ) =>
     apiClient.get(
-        `/resumes/${resumeId}`
+        `/resume/${resumeId}`
     );

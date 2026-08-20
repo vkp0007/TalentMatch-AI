@@ -9,91 +9,276 @@ import {
 } from "react-router";
 
 import {
-    getResume
+    getResume,
+    deleteResume
 } from "../../api/resume.api.js";
+
+import ResumeHeader
+    from "../../components/resume/ResumeHeader";
+
+import CandidateInfo
+    from "../../components/resume/CandidateInfo";
+
+import SkillsSection
+    from "../../components/resume/SkillsSection";
+
+import ToolsSection
+    from "../../components/resume/ToolsSection";
+
+import ProjectsSection
+    from "../../components/resume/ProjectsSection";
+
+import EducationSection
+    from "../../components/resume/EducationSection";
+
+import ExperienceSection
+    from "../../components/resume/ExperienceSection";
+
+import ListSection
+    from "../../components/resume/ListSection";
+
+import LoadingState
+    from "../../components/dashboard/LoadingState";
+
+import ErrorState
+    from "../../components/dashboard/ErrorState";
 
 
 const ResumeDetails = () => {
 
-    const { resumeId } = useParams();
+    const {
+        resumeId
+    } = useParams();
 
-    const navigate = useNavigate();
+
+    const navigate =
+        useNavigate();
 
 
-    const [resume, setResume] = useState(null);
+    // =====================================================
+    // STATE
+    // =====================================================
 
-    const [loading, setLoading] = useState(true);
+    const [resume, setResume] =
+        useState(null);
 
-    const [error, setError] = useState("");
+    const [loading, setLoading] =
+        useState(true);
 
+    const [error, setError] =
+        useState("");
+
+    const [deleting, setDeleting] =
+        useState(false);
+
+
+    // =====================================================
+    // LOAD RESUME
+    // =====================================================
+
+    const loadResume = async () => {
+
+        try {
+
+            setLoading(true);
+            setError("");
+
+
+            const response =
+                await getResume(
+                    resumeId
+                );
+
+
+            setResume(
+                response?.data?.data ||
+                null
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Failed to load resume:",
+                error
+            );
+
+
+            setError(
+                error.response?.data?.message ||
+                "Failed to load resume."
+            );
+
+
+        } finally {
+
+            setLoading(false);
+
+        }
+    };
+
+
+    // =====================================================
+    // DELETE RESUME
+    // =====================================================
+
+    const handleDelete = async () => {
+
+        const confirmed =
+            window.confirm(
+                "Are you sure you want to delete this resume?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        try {
+
+            setDeleting(true);
+            setError("");
+
+
+            await deleteResume(
+                resumeId
+            );
+
+
+            navigate(
+                "/resumes",
+                {
+                    replace: true
+                }
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Failed to delete resume:",
+                error
+            );
+
+
+            setError(
+                error.response?.data?.message ||
+                "Failed to delete resume."
+            );
+
+
+        } finally {
+
+            setDeleting(false);
+
+        }
+    };
+
+
+    // =====================================================
+    // INITIAL LOAD
+    // =====================================================
 
     useEffect(() => {
 
-        const loadResume = async () => {
+        if (resumeId) {
 
-            try {
+            loadResume();
 
-                setLoading(true);
-                setError("");
-
-                const response =
-                    await getResume(resumeId);
-
-                setResume(
-                    response?.data?.data
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to load resume:",
-                    error
-                );
-
-                setError(
-                    error.response?.data?.message ||
-                    "Failed to load resume"
-                );
-
-            } finally {
-
-                setLoading(false);
-            }
-        };
-
-
-        loadResume();
+        }
 
     }, [resumeId]);
 
 
+    // =====================================================
+    // LOADING
+    // =====================================================
+
     if (loading) {
 
         return (
-            <div className="max-w-5xl mx-auto">
 
-                <p className="text-gray-500">
-                    Loading resume...
-                </p>
+            <div className="
+                min-h-screen
+                bg-[#FDFBF7]
+                max-w-6xl
+                mx-auto
+                px-5
+                sm:px-6
+                py-8
+            ">
+
+                <LoadingState />
 
             </div>
         );
     }
 
 
-    if (error || !resume) {
+    // =====================================================
+    // ERROR
+    // =====================================================
+
+    if (error && !resume) {
 
         return (
-            <div className="max-w-5xl mx-auto">
 
-                <div className="bg-red-50 border border-red-200 rounded-xl p-5 text-red-700">
-                    {error || "Resume not found."}
-                </div>
+            <div className="
+                min-h-screen
+                bg-[#FDFBF7]
+                max-w-6xl
+                mx-auto
+                px-5
+                sm:px-6
+                py-8
+            ">
+
+                <ErrorState
+                    message={error}
+                    onRetry={loadResume}
+                />
 
             </div>
         );
     }
 
+
+    // =====================================================
+    // NOT FOUND
+    // =====================================================
+
+    if (!resume) {
+
+        return (
+
+            <div className="
+                min-h-screen
+                bg-[#FDFBF7]
+                max-w-6xl
+                mx-auto
+                px-5
+                sm:px-6
+                py-8
+            ">
+
+                <ErrorState
+                    message="Resume not found."
+                    onRetry={() =>
+                        navigate(
+                            "/resumes"
+                        )
+                    }
+                />
+
+            </div>
+        );
+    }
+
+
+    // =====================================================
+    // PARSED DATA
+    // =====================================================
 
     const parsedData =
         resume.parsedData || {};
@@ -135,572 +320,196 @@ const ResumeDetails = () => {
         parsedData.training || [];
 
 
+    // =====================================================
+    // RENDER
+    // =====================================================
+
     return (
 
-        <div className="max-w-5xl mx-auto pb-10">
+        <div className="
+            min-h-screen
+            bg-[#FDFBF7]
+        ">
+
+            <div className="
+                max-w-6xl
+                mx-auto
+                px-5
+                sm:px-6
+                py-7
+                sm:py-9
+                pb-16
+            ">
+
+                {/* =================================================
+                    HEADER
+                ================================================= */}
+
+                <ResumeHeader
+
+                    resumeName={
+                        resume.resumeName
+                    }
+
+                    targetRole={
+                        resume.targetRole
+                    }
+
+                    resumeId={
+                        resume._id
+                    }
+
+                    onDelete={
+                        handleDelete
+                    }
+
+                    deleting={
+                        deleting
+                    }
+
+                />
 
 
-            {/* ================================================= */}
-            {/* HEADER */}
-            {/* ================================================= */}
+                {/* =================================================
+                    DELETE ERROR
+                ================================================= */}
 
-            <div className="flex items-start justify-between mb-8">
+                {error && (
 
-                <div>
+                    <div className="
+                        mt-5
+                        mb-6
+                        rounded-2xl
+                        border
+                        border-red-200
+                        bg-red-50
+                        px-5
+                        py-4
+                        text-sm
+                        leading-5
+                        text-red-700
+                        shadow-sm
+                    ">
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate("/resumes")
+                        {error}
+
+                    </div>
+
+                )}
+
+
+
+
+                {/* =================================================
+                    RESUME CONTENT
+                ================================================= */}
+
+                <div className="
+                    space-y-5
+                ">
+
+                    {/* CANDIDATE INFORMATION */}
+
+                    <CandidateInfo
+                        candidateInfo={
+                            candidateInfo
                         }
-                        className="text-sm text-gray-500 hover:text-black mb-3"
-                    >
-                        ← Back to Resumes
-                    </button>
+                    />
 
 
-                    <h1 className="text-2xl font-bold">
-                        {resume.resumeName}
-                    </h1>
+                    {/* CORE SKILLS */}
+
+                    <SkillsSection
+                        technicalSkills={
+                            technicalSkills
+                        }
+                    />
 
 
-                    <p className="text-gray-600 mt-1">
+                    {/* TOOLS */}
 
-                        Target Role:{" "}
+                    <ToolsSection
+                        tools={
+                            tools
+                        }
+                    />
 
-                        <span className="font-medium">
-                            {resume.targetRole}
-                        </span>
 
-                    </p>
+                    {/* PROJECTS */}
+
+                    <ProjectsSection
+                        projects={
+                            projects
+                        }
+                    />
+
+
+                    {/* EDUCATION */}
+
+                    <EducationSection
+                        education={
+                            education
+                        }
+                    />
+
+
+                    {/* EXPERIENCE */}
+
+                    <ExperienceSection
+                        experience={
+                            experience
+                        }
+                    />
+
+
+                    {/* =================================================
+                        ADDITIONAL INFORMATION
+                    ================================================= */}
+
+                    <div className="
+                        space-y-5
+                    ">
+
+                        <ListSection
+                            title="Certifications"
+                            items={
+                                certifications
+                            }
+                            emptyText="No certifications listed."
+                            hideWhenEmpty
+                            variant="primary"
+                        />
+
+
+                        <ListSection
+                            title="Achievements"
+                            items={
+                                achievements
+                            }
+                            emptyText="No achievements listed."
+                            variant="success"
+                        />
+
+
+                        <ListSection
+                            title="Training"
+                            items={
+                                training
+                            }
+                            emptyText="No training listed."
+                            hideWhenEmpty
+                            variant="neutral"
+                        />
+
+                    </div>
 
                 </div>
-
-
-                <button
-                    type="button"
-                    onClick={() =>
-                        navigate(
-                            `/analysis?resumeId=${resume._id}`
-                        )
-                    }
-                    className="px-5 py-2.5 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition"
-                >
-                    Analyze Job Description
-                </button>
 
             </div>
 
-
-            {/* ================================================= */}
-            {/* CANDIDATE INFORMATION */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-5">
-                    Candidate Information
-                </h2>
-
-
-                <div className="grid md:grid-cols-2 gap-5">
-
-                    <Info
-                        label="Name"
-                        value={
-                            candidateInfo.name
-                        }
-                    />
-
-                    <Info
-                        label="Email"
-                        value={
-                            candidateInfo.email
-                        }
-                    />
-
-                    <Info
-                        label="Phone"
-                        value={
-                            candidateInfo.phone
-                        }
-                    />
-
-                    <Info
-                        label="LinkedIn"
-                        value={
-                            candidateInfo.linkedin
-                        }
-                    />
-
-                    <Info
-                        label="GitHub"
-                        value={
-                            candidateInfo.github
-                        }
-                    />
-
-                </div>
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* TECHNICAL SKILLS */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-4">
-                    Technical Skills
-                </h2>
-
-
-                {technicalSkills.length > 0 ? (
-
-                    <div className="flex flex-wrap gap-2">
-
-                        {technicalSkills.map(
-                            (skill, index) => (
-
-                                <span
-                                    key={index}
-                                    className="px-3 py-1.5 bg-gray-100 rounded-full text-sm text-gray-700"
-                                >
-                                    {skill}
-                                </span>
-
-                            )
-                        )}
-
-                    </div>
-
-                ) : (
-
-                    <Empty
-                        text="No technical skills listed."
-                    />
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* TOOLS */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-4">
-                    Tools & Platforms
-                </h2>
-
-
-                {tools.length > 0 ? (
-
-                    <div className="flex flex-wrap gap-2">
-
-                        {tools.map(
-                            (tool, index) => (
-
-                                <span
-                                    key={index}
-                                    className="px-3 py-1.5 bg-gray-100 rounded-full text-sm text-gray-700"
-                                >
-                                    {tool}
-                                </span>
-
-                            )
-                        )}
-
-                    </div>
-
-                ) : (
-
-                    <Empty
-                        text="No tools listed."
-                    />
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* PROJECTS */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-5">
-                    Projects
-                </h2>
-
-
-                {projects.length === 0 ? (
-
-                    <Empty
-                        text="No projects listed."
-                    />
-
-                ) : (
-
-                    <div className="space-y-6">
-
-                        {projects.map(
-                            (project, index) => (
-
-                                <Project
-                                    key={index}
-                                    project={project}
-                                />
-
-                            )
-                        )}
-
-                    </div>
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* EDUCATION */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-5">
-                    Education
-                </h2>
-
-
-                {education.length === 0 ? (
-
-                    <Empty
-                        text="No education information listed."
-                    />
-
-                ) : (
-
-                    <div className="space-y-5">
-
-                        {education.map(
-                            (item, index) => (
-
-                                <div
-                                    key={index}
-                                    className="border-b last:border-0 pb-5 last:pb-0"
-                                >
-
-                                    <h3 className="font-medium text-gray-900">
-                                        {item.degree}
-                                    </h3>
-
-
-                                    {item.institution && (
-
-                                        <p className="text-gray-600 text-sm mt-1">
-                                            {item.institution}
-                                        </p>
-
-                                    )}
-
-
-                                    {item.year && (
-
-                                        <p className="text-gray-500 text-sm mt-1">
-                                            {item.year}
-                                        </p>
-
-                                    )}
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* EXPERIENCE */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-5">
-                    Experience
-                </h2>
-
-
-                {experience.length === 0 ? (
-
-                    <Empty
-                        text="No professional experience listed."
-                    />
-
-                ) : (
-
-                    <div className="space-y-5">
-
-                        {experience.map(
-                            (item, index) => (
-
-                                <div
-                                    key={index}
-                                    className="border-b last:border-0 pb-5 last:pb-0"
-                                >
-
-                                    <h3 className="font-medium">
-                                        {item.role ||
-                                            item.position ||
-                                            "Experience"}
-                                    </h3>
-
-
-                                    {item.company && (
-
-                                        <p className="text-gray-600 text-sm mt-1">
-                                            {item.company}
-                                        </p>
-
-                                    )}
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* CERTIFICATIONS */}
-            {/* ================================================= */}
-
-            {certifications.length > 0 && (
-
-                <section className="bg-white border rounded-xl p-6 mb-6">
-
-                    <h2 className="text-lg font-semibold mb-4">
-                        Certifications
-                    </h2>
-
-
-                    <List
-                        items={certifications}
-                    />
-
-                </section>
-
-            )}
-
-
-            {/* ================================================= */}
-            {/* ACHIEVEMENTS */}
-            {/* ================================================= */}
-
-            <section className="bg-white border rounded-xl p-6 mb-6">
-
-                <h2 className="text-lg font-semibold mb-4">
-                    Achievements
-                </h2>
-
-
-                {achievements.length > 0 ? (
-
-                    <List
-                        items={achievements}
-                    />
-
-                ) : (
-
-                    <Empty
-                        text="No achievements listed."
-                    />
-
-                )}
-
-            </section>
-
-
-            {/* ================================================= */}
-            {/* TRAINING */}
-            {/* ================================================= */}
-
-            {training.length > 0 && (
-
-                <section className="bg-white border rounded-xl p-6">
-
-                    <h2 className="text-lg font-semibold mb-4">
-                        Training
-                    </h2>
-
-
-                    <List
-                        items={training}
-                    />
-
-                </section>
-
-            )}
-
         </div>
     );
 };
-
-
-// =====================================================
-// INFO
-// =====================================================
-
-const Info = ({
-    label,
-    value
-}) => (
-
-    <div>
-
-        <p className="text-sm text-gray-500">
-            {label}
-        </p>
-
-        <p className="mt-1 font-medium break-all">
-            {value || "Not provided"}
-        </p>
-
-    </div>
-
-);
-
-
-// =====================================================
-// PROJECT
-// =====================================================
-
-const Project = ({
-    project
-}) => {
-
-    return (
-
-        <div className="border-b last:border-0 pb-6 last:pb-0">
-
-            <h3 className="font-semibold text-gray-900">
-                {project.name}
-            </h3>
-
-
-            {project.technologies?.length > 0 && (
-
-                <div className="flex flex-wrap gap-2 mt-3">
-
-                    {project.technologies.map(
-                        (technology, index) => (
-
-                            <span
-                                key={index}
-                                className="px-2.5 py-1 bg-gray-100 rounded-md text-xs text-gray-600"
-                            >
-                                {technology}
-                            </span>
-
-                        )
-                    )}
-
-                </div>
-
-            )}
-
-
-            {project.description && (
-
-                <p className="text-gray-700 text-sm mt-3">
-                    {project.description}
-                </p>
-
-            )}
-
-
-            {project.responsibilities?.length > 0 && (
-
-                <ul className="mt-3 space-y-1">
-
-                    {project.responsibilities.map(
-                        (item, index) => (
-
-                            <li
-                                key={index}
-                                className="text-sm text-gray-700"
-                            >
-                                • {item}
-                            </li>
-
-                        )
-                    )}
-
-                </ul>
-
-            )}
-
-        </div>
-
-    );
-};
-
-
-// =====================================================
-// LIST
-// =====================================================
-
-const List = ({
-    items
-}) => (
-
-    <ul className="space-y-2">
-
-        {items.map(
-            (item, index) => (
-
-                <li
-                    key={index}
-                    className="text-gray-700 text-sm"
-                >
-                    • {item}
-                </li>
-
-            )
-        )}
-
-    </ul>
-
-);
-
-
-// =====================================================
-// EMPTY
-// =====================================================
-
-const Empty = ({
-    text
-}) => (
-
-    <p className="text-gray-500 text-sm">
-        {text}
-    </p>
-
-);
 
 
 export default ResumeDetails;
