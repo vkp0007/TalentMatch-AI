@@ -1,12 +1,10 @@
 import logging
 
-from models.embedding_model import (
-    get_embedding_model
-)
+import numpy as np
 
-from sklearn.metrics.pairwise import (
-    cosine_similarity
-)
+from sklearn.metrics.pairwise import cosine_similarity
+
+from models.embedding_model import get_embedding_model
 
 
 logging.basicConfig(
@@ -23,14 +21,13 @@ logger = logging.getLogger(__name__)
 def clean_text(text):
 
     if not text:
-
         return ""
 
     return (
         str(text)
-            .replace("\n", " ")
-            .replace("\t", " ")
-            .strip()
+        .replace("\n", " ")
+        .replace("\t", " ")
+        .strip()
     )
 
 
@@ -41,18 +38,22 @@ def clean_text(text):
 def build_jd_semantic_text(jd_profile):
 
     if not isinstance(jd_profile, dict):
-
         return ""
 
     parts = []
+
 
     # =====================================================
     # ROLE
     # =====================================================
 
-    role = jd_profile.get("role", "")
+    role = jd_profile.get(
+        "role",
+        ""
+    )
 
     if role:
+
         parts.append(
             f"Role: {role}"
         )
@@ -62,11 +63,9 @@ def build_jd_semantic_text(jd_profile):
         # REQUIRED SKILLS
         # =====================================================
 
-    required_skills = (
-        jd_profile.get(
-            "requiredSkills",
-            []
-        )
+    required_skills = jd_profile.get(
+        "requiredSkills",
+        []
     )
 
     if required_skills:
@@ -76,6 +75,7 @@ def build_jd_semantic_text(jd_profile):
             + ", ".join(
                 str(skill)
                 for skill in required_skills
+                if skill
             )
         )
 
@@ -84,11 +84,9 @@ def build_jd_semantic_text(jd_profile):
             # PREFERRED SKILLS
             # =====================================================
 
-    preferred_skills = (
-            jd_profile.get(
-            "preferredSkills",
-            []
-            )
+    preferred_skills = jd_profile.get(
+        "preferredSkills",
+        []
     )
 
     if preferred_skills:
@@ -98,6 +96,7 @@ def build_jd_semantic_text(jd_profile):
             + ", ".join(
                 str(skill)
                 for skill in preferred_skills
+                if skill
             )
         )
 
@@ -106,11 +105,9 @@ def build_jd_semantic_text(jd_profile):
                 # RESPONSIBILITIES
                 # =====================================================
 
-    responsibilities = (
-        jd_profile.get(
-            "responsibilities",
-            []
-        )
+    responsibilities = jd_profile.get(
+        "responsibilities",
+        []
     )
 
     if responsibilities:
@@ -120,6 +117,7 @@ def build_jd_semantic_text(jd_profile):
             + ". ".join(
                 str(item)
                 for item in responsibilities
+                if item
             )
         )
 
@@ -140,9 +138,12 @@ def build_jd_semantic_text(jd_profile):
         )
 
 
-    return "\n".join(parts)
+        return "\n".join(parts)
 
 
+                    # =========================================================
+                    # CALCULATE SEMANTIC SIMILARITY
+                    # =========================================================
 
 def calculate_similarity(
     resume_embedding,
@@ -152,7 +153,7 @@ def calculate_similarity(
     try:
 
         # -------------------------------------------------
-        # VALIDATE RESUME EMBEDDING
+        # RESUME EMBEDDING
         # -------------------------------------------------
 
         if not resume_embedding:
@@ -175,13 +176,16 @@ def calculate_similarity(
 
 
         # -------------------------------------------------
-        # VALIDATE JD
+        # JD PROFILE
         # -------------------------------------------------
 
-        if not jd_profile:
+        if not isinstance(
+            jd_profile,
+            dict
+        ):
 
             logger.warning(
-                "Job description is missing"
+                "Invalid JD profile"
             )
 
             return 0
@@ -193,37 +197,41 @@ def calculate_similarity(
 
 
         if not jd_text:
-            
+
             logger.warning(
                 "Unable to build semantic JD text"
             )
+
             return 0
 
 
         # -------------------------------------------------
-        # GENERATE JD EMBEDDING
+        # HASHING VECTORIZER
         # -------------------------------------------------
 
-        model = get_embedding_model()
+        vectorizer = get_embedding_model()
 
-        jd_embedding = model.encode(
-            jd_text,
-            normalize_embeddings=True
+
+        # -------------------------------------------------
+        # GENERATE JD VECTOR
+        # -------------------------------------------------
+
+        jd_vector = vectorizer.transform(
+            [clean_text(jd_text)]
         )
 
 
         # -------------------------------------------------
-        # VALIDATE JD EMBEDDING
+        # RESUME VECTOR
         # -------------------------------------------------
 
-        if len(jd_embedding) != 384:
-
-            logger.error(
-                "Invalid JD embedding dimension: "
-                f"{len(jd_embedding)}"
-            )
-
-            return 0
+        resume_vector = np.asarray(
+            resume_embedding,
+            dtype=float
+        ).reshape(
+            1,
+            -1
+        )
 
 
         # -------------------------------------------------
@@ -231,11 +239,8 @@ def calculate_similarity(
         # -------------------------------------------------
 
         similarity = cosine_similarity(
-
-            [resume_embedding],
-
-            [jd_embedding]
-
+            resume_vector,
+            jd_vector
         )[0][0]
 
 
@@ -261,15 +266,21 @@ def calculate_similarity(
         )
 
 
+        logger.info(
+            f"Semantic similarity: "
+            f"{similarity_score:.2f}%"
+        )
+
+
         return round(
-            similarity_score,
-            2
+        similarity_score,
+        2
         )
 
 
     except Exception as error:
 
-        logger.error(
+        logger.exception(
             f"Semantic Similarity Error: {error}"
         )
 

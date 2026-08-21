@@ -1,20 +1,20 @@
 from sklearn.feature_extraction.text import HashingVectorizer
 
 
-_model = None
+_vectorizer = None
 
 
 def get_embedding_model():
 
-    global _model
+    global _vectorizer
 
-    if _model is None:
+    if _vectorizer is None:
 
-        _model = HashingVectorizer(
+        _vectorizer = HashingVectorizer(
             n_features=384,
             stop_words="english",
             alternate_sign=False,
             norm="l2"
         )
 
-    return _model
+    return _vectorizer
