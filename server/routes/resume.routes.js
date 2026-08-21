@@ -17,14 +17,21 @@ import {
 
 const router = express.Router();
 
-// UPLOAD RESUME
 
+// =========================================================
+// UPLOAD RESUME
+// =========================================================
 
 router.post(
+
     "/",
+
     protect,
+
     upload.single("resume"),
+
     uploadResume
+
 );
 
 
@@ -33,21 +40,44 @@ router.post(
 // =========================================================
 
 router.get(
+
     "/",
+
     protect,
+
     getUserResumes
+
 );
+
+
+// =========================================================
+// GET RESUME BY ID
+// =========================================================
 
 router.get(
+
     "/:resumeId",
+
     protect,
+
     getResumeById
+
 );
 
+
+// =========================================================
+// DELETE RESUME
+// =========================================================
+
 router.delete(
+
     "/:resumeId",
+
     protect,
+
     deleteResume
+
 );
+
 
 export default router;

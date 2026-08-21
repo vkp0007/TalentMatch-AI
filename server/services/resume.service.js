@@ -7,6 +7,10 @@ import {
 from "./ai.service.js";
 
 
+// =========================================================
+// UPLOAD RESUME
+// =========================================================
+
 export const uploadResumeService = async ({
     file,
     userId,
@@ -18,6 +22,14 @@ export const uploadResumeService = async ({
 
         throw new Error(
             "No file uploaded"
+        );
+    }
+
+
+    if (!file.buffer) {
+
+        throw new Error(
+            "Resume file buffer is missing"
         );
     }
 
@@ -50,6 +62,7 @@ export const uploadResumeService = async ({
     ) {
 
         throw new Error(
+            extractedData?.message ||
             "Resume extraction failed"
         );
     }
@@ -91,13 +104,10 @@ export const uploadResumeService = async ({
             originalFileName:
                 file.originalname,
 
+            // Vercel does not provide
+            // persistent local file storage.
             fileUrl:
-                file.path
-                    ? file.path.replace(
-                        /\\/g,
-                        "/"
-                    )
-                    : "",
+                "",
 
             resumeText:
                 extractedData.extractedText ||
@@ -114,6 +124,10 @@ export const uploadResumeService = async ({
     return resume;
 };
 
+
+// =========================================================
+// GET RESUME BY ID
+// =========================================================
 
 export const getResumeByIdService = async ({
     resumeId,

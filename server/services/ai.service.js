@@ -1,21 +1,26 @@
 import axios from "axios";
 import FormData from "form-data";
 
+
 const AI_BASE_URL =
     process.env.AI_SERVICE_URL;
 
+
 console.log(
     "AI_SERVICE_URL:",
-    JSON.stringify(AI_BASE_URL)
+    JSON.stringify(
+        AI_BASE_URL
+    )
 );
 
 
 const apiClient = axios.create({
 
-    baseURL: AI_BASE_URL,
+    baseURL:
+        AI_BASE_URL,
 
-    timeout: 120000
-
+    timeout:
+        120000
 });
 
 
@@ -31,6 +36,14 @@ const extractResume = async (
 
         throw new Error(
             "Resume file is required"
+        );
+    }
+
+
+    if (!file.buffer) {
+
+        throw new Error(
+            "Resume file buffer is missing"
         );
     }
 
@@ -67,7 +80,10 @@ const extractResume = async (
                     Infinity,
 
                 maxBodyLength:
-                    Infinity
+                    Infinity,
+
+                timeout:
+                    120000
             }
         );
 
