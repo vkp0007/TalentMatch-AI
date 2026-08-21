@@ -1,7 +1,6 @@
 fastapi
 uvicorn
-sentence-transformers
-torch
+python-multipart
 scikit-learn
 pdfplumber
 pymupdf

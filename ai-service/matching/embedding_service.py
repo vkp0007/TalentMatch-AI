@@ -23,9 +23,9 @@ def clean_text(text):
 
     return (
         str(text)
-            .replace("\n", " ")
-            .replace("\t", " ")
-            .strip()
+        .replace("\n", " ")
+        .replace("\t", " ")
+        .strip()
     )
 
 
@@ -49,7 +49,7 @@ def generate_embedding(text):
 
 
         # -------------------------------------------------
-        # TOKEN SAFETY
+        # TEXT SAFETY
         # -------------------------------------------------
 
         text = text[:8000]
@@ -63,12 +63,21 @@ def generate_embedding(text):
 
 
         # -------------------------------------------------
-        # EMBEDDING
+        # HASHING VECTORIZATION
         # -------------------------------------------------
 
-        embedding = model.encode(
-            text,
-            normalize_embeddings=True
+        vector = model.transform(
+            [text]
+        )
+
+
+        # -------------------------------------------------
+        # CONVERT TO LIST
+        # -------------------------------------------------
+
+        embedding = (
+            vector.toarray()[0]
+            .tolist()
         )
 
 
@@ -86,7 +95,7 @@ def generate_embedding(text):
             return []
 
 
-        return embedding.tolist()
+        return embedding
 
 
     except Exception as error:
