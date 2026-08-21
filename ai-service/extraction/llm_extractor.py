@@ -49,6 +49,7 @@ def clean_contact_value(value):
 
     value = str(value).strip()
 
+    # Extract plain email from Markdown/mailto format
     email_match = re.search(
         r'[\w.+-]+@[\w.-]+\.\w+',
         value
@@ -66,6 +67,10 @@ def clean_contact_value(value):
     # =========================================================
 
 def clean_resume_data(data):
+
+    # -----------------------------------------------------
+    # Validate root object
+    # -----------------------------------------------------
 
     if not isinstance(data, dict):
 
@@ -152,8 +157,8 @@ def clean_resume_data(data):
 
     data["tools"] = normalize_skills(
         data.get(
-                "tools",
-                []
+            "tools",
+            []
         )
     )
 
@@ -167,12 +172,13 @@ def clean_resume_data(data):
             []
     )
 
+
     if not isinstance(
             projects,
             list
     ):
 
-        projects = []
+            projects = []
 
 
     cleaned_projects = []
@@ -189,10 +195,10 @@ def clean_resume_data(data):
 
 
         project["name"] = str(
-            project.get(
+                project.get(
                         "name",
                         ""
-            ) or ""
+                ) or ""
         ).strip()
 
 
@@ -219,78 +225,82 @@ def clean_resume_data(data):
 
 
         if not isinstance(
-            responsibilities,
-            list
+                    responsibilities,
+                    list
         ):
 
-            responsibilities = []
+                responsibilities = []
 
 
-            project["responsibilities"] = [
+        project["responsibilities"] = [
 
-                str(item).strip()
+            str(item).strip()
 
-                for item in responsibilities
+            for item in responsibilities
 
-                if item
-            ]
-
-
-            cleaned_projects.append(
-                project
-            )
+            if item
+        ]
 
 
-        data["projects"] = cleaned_projects
+        cleaned_projects.append(
+            project
+        )
+
+
+    data["projects"] = cleaned_projects
 
 
                     # =====================================================
                     # ARRAY FIELDS
                     # =====================================================
 
-        for field in [
+    for field in [
 
-            "experience",
-            "education",
-            "certifications",
-            "training",
-            "achievements"
+        "experience",
+        "education",
+        "certifications",
+        "training",
+        "achievements"
 
-        ]:
+    ]:
 
-            if not isinstance(
-                data.get(field),
-                list
-            ):
+        if not isinstance(
+            data.get(field),
+            list
+        ):
 
-                data[field] = []
+            data[field] = []
 
 
                             # =====================================================
                             # SUMMARY
                             # =====================================================
 
-        if not isinstance(
-                data.get(
-                    "candidateSummary"
-                ),
-                str
-        ):
+    if not isinstance(
+        data.get(
+                "candidateSummary"
+        ),
+        str
+    ):
 
-                data["candidateSummary"] = ""
-
-
-                data["candidateSummary"] = (
-                    data["candidateSummary"]
-                    .strip()
-                )
+        data["candidateSummary"] = ""
 
 
-                return data
+    data["candidateSummary"] = (
+        data["candidateSummary"]
+        .strip()
+    )
+
+
+                                # =====================================================
+                                # IMPORTANT
+                                # =====================================================
+
+    return data
 
 
                             # =========================================================
-                            # EMPTY RESPONSE
+                            # EMPTY RESUME RESPONSE
                             # =========================================================
 
 def empty_resume_response():
@@ -340,6 +350,10 @@ def extract_resume_data(
 
     try:
 
+        # =================================================
+        # VALIDATE RESUME TEXT
+        # =================================================
+
         if not resume_text:
 
             logger.warning(
@@ -349,16 +363,16 @@ def extract_resume_data(
             return empty_resume_response()
 
 
-        # -------------------------------------------------
-        # Limit input size
-        # -------------------------------------------------
+        # =================================================
+        # LIMIT INPUT SIZE
+        # =================================================
 
         resume_text = resume_text[:12000]
 
 
-        # -------------------------------------------------
-        # Build prompt
-        # -------------------------------------------------
+        # =================================================
+        # BUILD PROMPT
+        # =================================================
 
         prompt = (
 
@@ -371,9 +385,9 @@ def extract_resume_data(
         )
 
 
-        # -------------------------------------------------
-        # Call Groq
-        # -------------------------------------------------
+        # =================================================
+        # GROQ / LLM
+        # =================================================
 
         response_text = generate_completion(
 
@@ -382,6 +396,10 @@ def extract_resume_data(
             temperature=0.1
         )
 
+
+        # =================================================
+        # VALIDATE LLM RESPONSE
+        # =================================================
 
         if not response_text:
 
@@ -392,9 +410,9 @@ def extract_resume_data(
             return empty_resume_response()
 
 
-        # -------------------------------------------------
+        # =================================================
         # DEBUG RESPONSE
-        # -------------------------------------------------
+        # =================================================
 
         logger.info(
             "LLM response length: %s",
@@ -407,9 +425,9 @@ def extract_resume_data(
         )
 
 
-        # -------------------------------------------------
-        # Clean JSON
-        # -------------------------------------------------
+        # =================================================
+        # CLEAN JSON
+        # =================================================
 
         cleaned_text = clean_json_response(
             response_text
@@ -425,9 +443,9 @@ def extract_resume_data(
             return empty_resume_response()
 
 
-        # -------------------------------------------------
-        # Parse JSON
-        # -------------------------------------------------
+        # =================================================
+        # PARSE JSON
+        # =================================================
 
         try:
 
@@ -455,9 +473,9 @@ def extract_resume_data(
             return empty_resume_response()
 
 
-        # -------------------------------------------------
-        # Validate object
-        # -------------------------------------------------
+        # =================================================
+        # VALIDATE PARSED JSON
+        # =================================================
 
         if not isinstance(
             parsed_json,
@@ -465,20 +483,40 @@ def extract_resume_data(
         ):
 
             logger.error(
-                "LLM returned JSON but it is not an object."
+                "LLM returned JSON but root is not an object."
             )
 
             return empty_resume_response()
 
 
-        # -------------------------------------------------
-        # Clean extracted data
-        # -------------------------------------------------
+        # =================================================
+        # CLEAN EXTRACTED DATA
+        # =================================================
 
         cleaned_data = clean_resume_data(
             parsed_json
         )
 
+
+        # =================================================
+        # SAFETY CHECK
+        # =================================================
+
+        if not isinstance(
+            cleaned_data,
+            dict
+        ):
+
+            logger.error(
+                "clean_resume_data() returned invalid data."
+            )
+
+            return empty_resume_response()
+
+
+        # =================================================
+        # EXTRACTION SUCCESS
+        # =================================================
 
         logger.info(
             "Resume extraction successful."
@@ -490,6 +528,17 @@ def extract_resume_data(
             len(
                 cleaned_data.get(
                     "technicalSkills",
+                    []
+                )
+            )
+        )
+
+
+        logger.info(
+            "Tools extracted: %s",
+            len(
+                cleaned_data.get(
+                    "tools",
                     []
                 )
             )
@@ -518,8 +567,41 @@ def extract_resume_data(
         )
 
 
+        logger.info(
+            "Education entries: %s",
+            len(
+                cleaned_data.get(
+                    "education",
+                    []
+                )
+            )
+        )
+
+
+        # =================================================
+        # RETURN
+        # =================================================
+
         return cleaned_data
 
+
+        # =====================================================
+        # JSON ERROR
+        # =====================================================
+
+    except json.JSONDecodeError as error:
+
+        logger.error(
+            "Resume JSON parsing error: %s",
+            error
+        )
+
+        return empty_resume_response()
+
+
+    # =====================================================
+    # GENERAL ERROR
+    # =====================================================
 
     except Exception as error:
 
