@@ -11,6 +11,10 @@ import {
 from "../models/resume.model.js";
 
 
+// =========================================================
+// UPLOAD RESUME
+// =========================================================
+
 export const uploadResume = async (
     req,
     res,
@@ -82,20 +86,20 @@ export const getUserResumes = async (
 
     try {
 
-const resumes =
-    await Resume.find({
+        const resumes =
+            await Resume.find({
 
-        userId:
-            req.user._id
+                userId:
+                    req.user._id
 
-    })
-    .select(
-        "_id resumeName targetRole originalFileName createdAt"
-    )
-    .sort({
+            })
+            .select(
+                "_id resumeName targetRole originalFileName createdAt"
+            )
+            .sort({
 
-        createdAt: -1
-    });
+                createdAt: -1
+            });
 
 
         return res.status(200).json({
@@ -112,12 +116,21 @@ const resumes =
     }
 };
 
-export const getResumeById = async (req, res) => {
+
+// =========================================================
+// GET RESUME BY ID
+// =========================================================
+
+export const getResumeById = async (
+    req,
+    res
+) => {
 
     try {
 
         const resume =
             await getResumeByIdService({
+
                 resumeId:
                     req.params.resumeId,
 
@@ -163,6 +176,7 @@ export const getResumeById = async (req, res) => {
         });
     }
 };
+
 
 // =========================================================
 // DELETE RESUME

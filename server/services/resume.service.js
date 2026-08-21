@@ -42,9 +42,9 @@ export const uploadResumeService = async ({
     }
 
 
-    // =================================================
+    // =====================================================
     // PYTHON AI SERVICE
-    // =================================================
+    // =====================================================
 
     const extractedData =
         await extractResume(
@@ -52,9 +52,9 @@ export const uploadResumeService = async ({
         );
 
 
-    // =================================================
+    // =====================================================
     // VALIDATE AI RESPONSE
-    // =================================================
+    // =====================================================
 
     if (
         !extractedData ||
@@ -68,9 +68,9 @@ export const uploadResumeService = async ({
     }
 
 
-    // =================================================
+    // =====================================================
     // VALIDATE EMBEDDING
-    // =================================================
+    // =====================================================
 
     const embedding =
         extractedData.embedding || [];
@@ -86,9 +86,9 @@ export const uploadResumeService = async ({
     }
 
 
-    // =================================================
+    // =====================================================
     // SAVE RESUME
-    // =================================================
+    // =====================================================
 
     const resume =
         await Resume.create({
@@ -104,11 +104,6 @@ export const uploadResumeService = async ({
             originalFileName:
                 file.originalname,
 
-            // Vercel does not provide
-            // persistent local file storage.
-            fileUrl:
-                "",
-
             resumeText:
                 extractedData.extractedText ||
                 "",
@@ -118,6 +113,7 @@ export const uploadResumeService = async ({
                 {},
 
             embedding
+
         });
 
 
@@ -140,9 +136,10 @@ export const getResumeByIdService = async ({
             _id: resumeId,
 
             userId
+
         })
         .select(
-            "_id resumeName targetRole originalFileName fileUrl parsedData createdAt"
+            "_id resumeName targetRole originalFileName parsedData createdAt"
         );
 
 
@@ -167,6 +164,7 @@ export const deleteResumeService = async ({
                 _id: resumeId,
 
                 userId
+
             });
 
 
