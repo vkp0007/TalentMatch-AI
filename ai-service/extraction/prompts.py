@@ -1,64 +1,85 @@
 RESUME_EXTRACTION_PROMPT = """
-You are an advanced ATS resume parser.
+You are an ATS resume parser.
 
-Analyze the following resume and extract structured information accurately.
+Analyze the resume below and extract ONLY information explicitly present in it.
 
-EXTRACT:
+Return exactly one valid JSON object matching the schema below.
 
-1. Candidate Information
-2. Technical Skills
-3. Tools / Frameworks / Platforms
-4. Work Experience
-5. Projects
-6. Education
-7. Certifications
-8. Training
-9. Achievements
-10. Professional Summary
+EXTRACTION RULES:
 
-IMPORTANT EXTRACTION RULES:
+1. Extract candidate contact information exactly as stated.
+2. Extract technical skills explicitly mentioned in the resume.
+3. Extract tools, frameworks, libraries, platforms, databases, APIs, and development tools.
+4. Technologies explicitly used in projects may also be included in technicalSkills.
+5. Extract all relevant work experience.
+6. Extract projects with their technologies and concise descriptions.
+7. Extract education.
+8. Keep certifications, training, and achievements separate.
+9. Create a concise professional summary using ONLY information from the resume.
+10. Do not invent, infer, or assume information.
+11. Do not duplicate skills.
+12. Use empty strings when information is unavailable.
+13. Use empty arrays when no items are available.
 
-- Extract technical skills explicitly mentioned in the resume.
-- Normalize skill names where appropriate.
-- Avoid duplicates.
-- Include frameworks, libraries, databases, cloud tools, APIs, programming languages,
-  AI/ML technologies, and development tools.
-- Technologies clearly mentioned within projects may also be included in technicalSkills.
-- Do not invent information.
-- Do not infer technologies that are not clearly supported by the resume.
-- Keep extracted skills concise.
-- Return empty arrays if data is unavailable.
-- Return empty strings if values are unavailable.
-- Keep certifications separate from training.
-- Keep achievements separate from certifications and training.
+SKILL NORMALIZATION:
 
-SKILL NORMALIZATION EXAMPLES:
+Normalize common technology names consistently:
 
-Use:
-- "reactjs" instead of "React JS"
-- "node.js" instead of "NodeJS"
-- "express.js"
-- "mongodb"
-- "tailwind css"
-- "restful apis"
-- "machine learning"
-- "deep learning"
-- "natural language processing"
+- React JS -> reactjs
+- ReactJS -> reactjs
+- NodeJS -> node.js
+- Node.js -> node.js
+- ExpressJS -> express.js
+- Express.js -> express.js
+- MongoDB -> mongodb
+- Tailwind CSS -> tailwind css
+- REST API / REST APIs -> restful apis
+- Machine Learning -> machine learning
+- Deep Learning -> deep learning
+- NLP -> natural language processing
 
-STRICT RULES:
+CONTACT RULES:
 
-- Return ONLY valid JSON.
-- No markdown.
+- Email must be a plain email address.
+- Do not use Markdown links.
+- LinkedIn and GitHub should contain the URL or handle exactly as found.
+- Do not invent missing contact information.
+
+EXPERIENCE RULES:
+
+- company: company name
+- role: job title
+- duration: duration or dates exactly as stated
+- description: concise bullet points based only on the resume
+
+PROJECT RULES:
+
+- name: project name
+- technologies: technologies explicitly associated with the project
+- description: concise bullet points describing the project
+
+EDUCATION RULES:
+
+- degree: degree name
+- institution: institution name
+- year: graduation/completion year
+
+IMPORTANT:
+
+- Return ONLY JSON.
+- No Markdown.
+- No ```json blocks.
 - No explanations.
 - No comments.
-- No extra text.
-- Use double quotes only.
-- Ensure valid JSON formatting.
-- Email addresses must be returned as plain email addresses.
-- Do not return Markdown links for email, LinkedIn, or GitHub.
+- No text before or after the JSON.
+- Use double quotes.
+- Ensure all strings are properly closed.
+- Ensure all arrays and objects are properly closed.
+- Keep descriptions concise.
+- Do not reproduce the entire resume.
+- The JSON must be complete and valid.
 
-
-JSON STRUCTURE:
+JSON SCHEMA:
 
 {
     "candidateInfo": {
@@ -106,7 +127,6 @@ JSON STRUCTURE:
 
     "candidateSummary": ""
 }
-
 
 Resume:
 """
