@@ -1,4 +1,4 @@
-import os
+import io
 import re
 import logging
 
@@ -16,6 +16,10 @@ SUPPORTED_EXTENSIONS = [
     ".docx"
 ]
 
+
+# =========================================================
+# CLEAN TEXT
+# =========================================================
 
 def clean_text(text):
 
@@ -35,7 +39,11 @@ def clean_text(text):
     return text.strip()
 
 
-def extract_pdf_text(file_path):
+    # =========================================================
+    # PDF EXTRACTION
+    # =========================================================
+
+def extract_pdf_text(file_bytes):
 
     text = ""
 
@@ -46,8 +54,12 @@ def extract_pdf_text(file_path):
 
     try:
 
+        pdf_stream = io.BytesIO(
+            file_bytes
+        )
+
         with pdfplumber.open(
-            file_path
+            pdf_stream
         ) as pdf:
 
             for page in pdf.pages:
@@ -62,6 +74,7 @@ def extract_pdf_text(file_path):
                         extracted + "\n"
                     )
 
+
     except Exception as error:
 
         logger.warning(
@@ -75,29 +88,33 @@ def extract_pdf_text(file_path):
 
     if len(text.strip()) < 50:
 
-            try:
+        try:
 
-                doc = pymupdf.open(file_path)
+            doc = pymupdf.open(
+                  stream=file_bytes,
+                  filetype="pdf"
+            )
 
-                for page in doc:
+            for page in doc:
 
-                    extracted = (
-                        page.get_text()
+                extracted = (
+                    page.get_text()
+                )
+
+                if extracted:
+
+                    text += (
+                        extracted + "\n"
                     )
 
-                    if extracted:
+            doc.close()
 
-                        text += (
-                            extracted + "\n"
-                        )
 
-                doc.close()
+        except Exception as error:
 
-            except Exception as error:
-
-                logger.warning(
-                    f"PyMuPDF extraction failed: {str(error)}"
-                )
+            logger.warning(
+                f"PyMuPDF extraction failed: {str(error)}"
+            )
 
 
                 # =====================================================
@@ -112,19 +129,27 @@ def extract_pdf_text(file_path):
     if len(text) < 30:
 
         logger.warning(
-        "Low PDF extraction quality detected."
+            "Low PDF extraction quality detected."
         )
 
 
     return text
 
 
-def extract_docx_text(file_path):
+                # =========================================================
+                # DOCX EXTRACTION
+                # =========================================================
+
+def extract_docx_text(file_bytes):
 
     try:
 
+        doc_stream = io.BytesIO(
+            file_bytes
+        )
+
         doc = Document(
-            file_path
+            doc_stream
         )
 
 
@@ -166,27 +191,54 @@ def extract_docx_text(file_path):
         return ""
 
 
+    # =========================================================
+    # RESUME TEXT EXTRACTION
+    # =========================================================
+
 def extract_resume_text(
-    file_path
+    file_bytes,
+    filename
 ):
 
     try:
 
-        if not os.path.exists(
-            file_path
-        ):
+        if not file_bytes:
 
             logger.error(
-                f"File does not exist: {file_path}"
+                "Empty resume file received."
             )
 
             return ""
 
 
-        extension = os.path.splitext(
-            file_path
-        )[1].lower()
+        if not filename:
 
+            logger.error(
+                "Resume filename is missing."
+            )
+
+            return ""
+
+
+        # -------------------------------------------------
+        # GET FILE EXTENSION
+        # -------------------------------------------------
+
+        extension = (
+            filename
+            .lower()
+            .rsplit(".", 1)[-1]
+        )
+
+
+        extension = (
+            "." + extension
+        )
+
+
+        # -------------------------------------------------
+        # VALIDATE FORMAT
+        # -------------------------------------------------
 
         if extension not in SUPPORTED_EXTENSIONS:
 
@@ -197,16 +249,29 @@ def extract_resume_text(
             return ""
 
 
+        # -------------------------------------------------
+        # PDF
+        # -------------------------------------------------
+
         if extension == ".pdf":
 
             return extract_pdf_text(
-             file_path
+              file_bytes
+        )
+
+
+    # -------------------------------------------------
+    # DOCX
+    # -------------------------------------------------
+
+        if extension == ".docx":
+
+            return extract_docx_text(
+              file_bytes
             )
 
 
-        return extract_docx_text(
-            file_path
-          )
+        return ""
 
 
     except Exception as error:

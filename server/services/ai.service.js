@@ -1,15 +1,21 @@
 import axios from "axios";
+import FormData from "form-data";
 
-const AI_BASE_URL = process.env.AI_SERVICE_URL;
+const AI_BASE_URL =
+    process.env.AI_SERVICE_URL;
 
 console.log(
     "AI_SERVICE_URL:",
     JSON.stringify(AI_BASE_URL)
 );
 
+
 const apiClient = axios.create({
+
     baseURL: AI_BASE_URL,
-    timeout: 30000
+
+    timeout: 120000
+
 });
 
 
@@ -18,18 +24,53 @@ const apiClient = axios.create({
 // =========================================================
 
 const extractResume = async (
-    filePath
+    file
 ) => {
+
+    if (!file) {
+
+        throw new Error(
+            "Resume file is required"
+        );
+    }
+
+
+    const formData =
+        new FormData();
+
+
+    formData.append(
+        "file",
+        file.buffer,
+        {
+            filename:
+                file.originalname,
+
+            contentType:
+                file.mimetype
+        }
+    );
+
 
     const response =
         await apiClient.post(
 
             "/extract-resume",
 
+            formData,
+
             {
-                filePath
+                headers:
+                    formData.getHeaders(),
+
+                maxContentLength:
+                    Infinity,
+
+                maxBodyLength:
+                    Infinity
             }
         );
+
 
     return response.data;
 };
@@ -58,6 +99,7 @@ const analyzeJobAI = async ({
                 jobDescription
             }
         );
+
 
     return response.data;
 };

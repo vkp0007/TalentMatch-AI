@@ -1,5 +1,3 @@
-import path from "path";
-
 import { Resume }
 from "../models/resume.model.js";
 
@@ -33,22 +31,12 @@ export const uploadResumeService = async ({
 
 
     // =================================================
-    // ABSOLUTE FILE PATH
-    // =================================================
-
-    const absolutePath =
-        path.resolve(
-            file.path
-        );
-
-
-    // =================================================
     // PYTHON AI SERVICE
     // =================================================
 
     const extractedData =
         await extractResume(
-            absolutePath
+            file
         );
 
 
@@ -104,10 +92,12 @@ export const uploadResumeService = async ({
                 file.originalname,
 
             fileUrl:
-                file.path.replace(
-                    /\\/g,
-                    "/"
-                ),
+                file.path
+                    ? file.path.replace(
+                        /\\/g,
+                        "/"
+                    )
+                    : "",
 
             resumeText:
                 extractedData.extractedText ||
@@ -123,6 +113,7 @@ export const uploadResumeService = async ({
 
     return resume;
 };
+
 
 export const getResumeByIdService = async ({
     resumeId,
@@ -143,6 +134,7 @@ export const getResumeByIdService = async ({
 
     return resume;
 };
+
 
 // =========================================================
 // DELETE RESUME
