@@ -114,6 +114,9 @@ export const analyzeResume = async (req, res) => {
 
 export const getUserAnalyses = async (req, res) => {
 
+    console.time("GET /analysis TOTAL");
+    console.time("GET /analysis SERVICE");
+
     try {
 
         const analyses =
@@ -121,28 +124,28 @@ export const getUserAnalyses = async (req, res) => {
                 req.user._id
             );
 
+        console.timeEnd("GET /analysis SERVICE");
 
         return res.status(200).json({
-
             success: true,
-
-            count:
-                analyses.length,
-
+            count: analyses.length,
             analyses
         });
 
-
     } catch (error) {
 
+        console.timeEnd("GET /analysis SERVICE");
+
         return res.status(500).json({
-
             success: false,
-
             message:
                 error.message ||
                 "Failed to fetch analyses"
         });
+
+    } finally {
+
+        console.timeEnd("GET /analysis TOTAL");
     }
 };
 

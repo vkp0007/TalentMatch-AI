@@ -78,41 +78,40 @@ export const uploadResume = async (
 // GET USER RESUMES
 // =========================================================
 
-export const getUserResumes = async (
-    req,
-    res,
-    next
-) => {
+export const getUserResumes = async (req, res, next) => {
+
+    console.time("GET /resume TOTAL");
+    console.time("GET /resume DB");
 
     try {
 
         const resumes =
             await Resume.find({
-
-                userId:
-                    req.user._id
-
+                userId: req.user._id
             })
             .select(
                 "_id resumeName targetRole originalFileName createdAt"
             )
             .sort({
-
                 createdAt: -1
             });
 
+        console.timeEnd("GET /resume DB");
 
         return res.status(200).json({
-
             success: true,
-
             data: resumes
         });
 
-
     } catch (error) {
 
+        console.timeEnd("GET /resume DB");
         next(error);
+
+    } finally {
+
+        console.timeEnd("GET /resume TOTAL");
+
     }
 };
 

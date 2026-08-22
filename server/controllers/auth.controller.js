@@ -154,36 +154,42 @@ export const loginUser = async (req, res) => {
 // get logged-in user profile
 export const getUserProfile = async (req, res) => {
 
+    console.time("GET /profile TOTAL");
+    console.time("GET /profile DB");
+
     try {
 
-        const user = await User.findById(req.user._id).select("-password")
+        const user =
+            await User.findById(
+                req.user._id
+            ).select("-password");
 
+        console.timeEnd("GET /profile DB");
 
         if (!user) {
 
             return res.status(404).json({
-
                 success: false,
-
                 message: "User not found"
-            })
+            });
         }
 
-
-        res.status(200).json({
-
+        return res.status(200).json({
             success: true,
-
             user
-        })
+        });
 
     } catch (error) {
 
-        res.status(500).json({
+        console.timeEnd("GET /profile DB");
 
+        return res.status(500).json({
             success: false,
-
             message: error.message
-        })
+        });
+
+    } finally {
+
+        console.timeEnd("GET /profile TOTAL");
     }
-}
+};
