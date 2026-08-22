@@ -1,87 +1,80 @@
-import jwt from "jsonwebtoken"
-
-import { User }
-from "../models/user.model.js"
-
+import jwt from "jsonwebtoken";
+import { User } from "../models/user.model.js";
 
 export const protect = async (req, res, next) => {
 
+    console.time("AUTH TOTAL");
+
     try {
 
-        let token
-
+        let token;
 
         // check bearer token
         if (
-
             req.headers.authorization &&
-
-            req.headers.authorization.startsWith(
-                "Bearer"
-            )
+            req.headers.authorization.startsWith("Bearer")
         ) {
-
             token =
                 req.headers.authorization
-                .split(" ")[1]
+                    .split(" ")[1];
         }
-
 
         // token missing
         if (!token) {
+            console.timeEnd("AUTH TOTAL");
 
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                "Not authorized, token missing"
-            })
+                message: "Not authorized, token missing"
+            });
         }
 
 
-        // verify token
+        // JWT verification
+        console.time("JWT VERIFY");
+
         const decoded =
             jwt.verify(
-
                 token,
-
                 process.env.JWT_SECRET
-            )
+            );
+
+        console.timeEnd("JWT VERIFY");
 
 
-        // get user
+        // MongoDB user lookup
+        console.time("AUTH USER DB");
+
         req.user =
             await User.findById(
-
                 decoded.id
+            ).select("-password");
 
-            ).select("-password")
+        console.timeEnd("AUTH USER DB");
 
 
         // user missing
         if (!req.user) {
 
+            console.timeEnd("AUTH TOTAL");
+
             return res.status(401).json({
-
                 success: false,
-
-                message:
-                "User not found"
-            })
+                message: "User not found"
+            });
         }
 
+        console.timeEnd("AUTH TOTAL");
 
-        next()
+        next();
 
-    } catch(error) {
+    } catch (error) {
+
+        console.timeEnd("AUTH TOTAL");
 
         return res.status(401).json({
-
             success: false,
-
-            message:
-            "Invalid or expired token"
-        })
+            message: "Invalid or expired token"
+        });
     }
-}
+};
