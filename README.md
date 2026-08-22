@@ -1,355 +1,533 @@
-# 🚀 TalentMatch AI - AI-Powered Resume Intelligence Platform
+# TalentMatch AI
 
-TalentMatch AI is a full-stack AI-powered Resume Intelligence Platform that helps candidates evaluate, optimize, and improve their resumes against job descriptions using ATS-style analysis, semantic matching, and AI-generated recommendations.
+TalentMatch AI is an AI-powered career assistance platform that helps candidates analyze resumes against job descriptions, improve applications, generate application emails, manage drafts, and practice interviews.
 
-Unlike traditional keyword-based resume checkers, TalentMatch AI leverages Natural Language Processing (NLP), Sentence Transformers, and Large Language Models (LLMs) to provide deeper insights into resume-job fit.
+## Live Demo
 
----
+- **Frontend:** https://talent-match-ai.vercel.app/
+- **Node.js API:** https://talent-match-ai-server.vercel.app/
+- **AI Service:** https://talentmatch-ai-1-aok7.onrender.com/
 
-## ✨ Features
+## Demo Credentials
 
-### 📄 Resume Management
+> Replace these placeholders with a **dedicated demo account** before publishing the README.
 
-* Upload and manage multiple resumes
-* Resume parsing and structured data extraction
-* Resume-specific ATS reports
-* Analysis history tracking
+- **Email:** `YOUR_DEMO_EMAIL`
+- **Password:** `YOUR_DEMO_PASSWORD`
 
-### 🤖 AI-Powered Resume Analysis
-
-* Job Description (JD) parsing
-* Semantic resume-job matching
-* ATS score generation
-* Skill gap analysis
-* Missing skill detection
-* Additional skill identification
-* AI-powered recommendations
-
-### 📊 ATS Report Dashboard
-
-* Resume-wise analysis reports
-* Detailed ATS score breakdown
-* Matched skills visualization
-* Missing skills insights
-* Actionable recommendations
-
-### 🔐 Authentication
-
-* User Registration
-* User Login
-* JWT Authentication
-* Protected Routes
-* Persistent Sessions
+**Security:** Never publish personal credentials, API keys, MongoDB credentials, JWT secrets, or Groq API keys. Use a separate demo account for public testing.
 
 ---
 
-## 🏗️ System Architecture
+## Features
 
-```text
-React Frontend
-        │
-        ▼
-Node.js + Express Backend
-        │
-        ▼
-FastAPI AI Service
-        │
- ┌──────┼────────┐
- ▼      ▼        ▼
-Resume  JD      Semantic
-Parser  Parser  Matching
-        │
-        ▼
- ATS Scoring Engine
-        │
-        ▼
-Recommendations Engine
-        │
-        ▼
-MongoDB Database
-```
+- User authentication
+- Resume upload for PDF/DOCX
+- AI-powered resume parsing
+- Candidate information extraction
+- Technical skill and tool extraction
+- Experience, project, education, certification, training, and achievement extraction
+- Resume/job-description analysis
+- Semantic similarity scoring
+- Required and preferred skill matching
+- Missing and additional skill detection
+- Education and experience eligibility analysis
+- Application email generation
+- AI-powered email refinement
+- Saved application email drafts
+- AI interview coaching
+- Resume-aware interview preparation
 
 ---
 
-## 🧠 AI Analysis Pipeline
-
-```text
-Resume Upload
-      │
-      ▼
-Resume Text Extraction
-      │
-      ▼
-Structured Resume Parsing
-      │
-      ▼
-Job Description Analysis
-      │
-      ▼
-Embedding Generation
-      │
-      ▼
-Semantic Similarity Matching
-      │
-      ▼
-Skill Gap Analysis
-      │
-      ▼
-ATS Score Calculation
-      │
-      ▼
-AI Recommendations
-      │
-      ▼
-Store Analysis Report
-```
-
----
-
-## 🛠️ Tech Stack
+## Technology Stack
 
 ### Frontend
 
-* React.js
-* React Router
-* Tailwind CSS
-* Axios
-* Lucide React
+- React
+- React Router
+- Tailwind CSS
+- Axios
+- Lucide React
+- Vercel
 
 ### Backend
 
-* Node.js
-* Express.js
-* MongoDB
-* Mongoose
-* JWT Authentication
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- Multer
+- Axios
+- Vercel
 
 ### AI Service
 
-* FastAPI
-* Sentence Transformers
-* Scikit-learn
-* PDFPlumber
-* PyMuPDF
-* Python-Docx
-* Groq API
+- Python
+- FastAPI
+- Uvicorn
+- scikit-learn
+- pdfplumber
+- PyMuPDF
+- python-docx
+- Groq API
+- python-dotenv
+- Render
 
-### Database
+### AI / NLP
 
-* MongoDB Atlas
+- LLM-based structured resume extraction
+- Job-description extraction
+- HashingVectorizer
+- Cosine similarity
+- Skill normalization
+- Skill matching
+- Eligibility matching
+- Weighted scoring
 
 ---
 
-## 📂 Project Structure
+## Architecture
 
 ```text
-TalentMatch-AI
+                    ┌──────────────────────┐
+                    │      React App       │
+                    │   Tailwind + Axios   │
+                    │        Vercel        │
+                    └──────────┬───────────┘
+                               │
+                               │ REST API
+                               ▼
+                    ┌──────────────────────┐
+                    │   Node.js / Express  │
+                    │      Backend API     │
+                    │        Vercel        │
+                    └───────┬───────┬──────┘
+                            │       │
+                            │       │ AI requests
+                            ▼       ▼
+                     ┌──────────┐ ┌────────────────────┐
+                     │ MongoDB  │ │   Python AI API    │
+                     │          │ │ FastAPI + Render   │
+                     └──────────┘ └─────────┬──────────┘
+                                            │
+                                   ┌────────┴────────┐
+                                   ▼                 ▼
+                              Groq LLM       ML Matching
+                                            HashingVectorizer
+```
+
+---
+
+## Repository Structure
+
+```text
+TalentMatch-AI/
 │
-├── frontend
-│   ├── src
-│   │   ├── api
-│   │   ├── components
-│   │   ├── context
-│   │   ├── pages
-│   │   ├── routes     
+├── client/                         # React frontend
+│   ├── src/
+│   │   ├── api/
+│   │   ├── components/
+│   │   │   ├── analysis/
+│   │   │   ├── applicationEmail/
+│   │   │   ├── drafts/
+│   │   │   ├── interview/
+│   │   │   ├── resume/
+│   │   │   └── common/
+│   │   ├── modules/
+│   │   │   ├── auth/
+│   │   │   ├── dashboard/
+│   │   │   ├── analysis/
+│   │   │   ├── application-email/
+│   │   │   ├── drafts/
+│   │   │   ├── interview/
+│   │   │   └── resumes/
+│   │   ├── hooks/
+│   │   ├── layouts/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   └── package.json
 │
-├── server
-│   ├── config
-│   ├── controllers
-│   ├── routes
-│   ├── middlewares
-│   ├── models
-│   └── services
+├── server/                         # Node.js / Express API
+│   ├── controllers/
+│   ├── middlewares/
+│   │   ├── auth.middleware.js
+│   │   ├── error.middleware.js
+│   │   └── upload.middleware.js
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   │   ├── ai.service.js
+│   │   ├── analysis.service.js
+│   │   ├── applicationEmail.service.js
+│   │   ├── interview.service.js
+│   │   └── resume.service.js
+│   ├── config/
+│   ├── utils/
+│   ├── app.js
+│   ├── server.js
+│   └── package.json
 │
-├── ai-service
-│   ├── extraction
-│   ├── matching
-│   ├── utils
-│   ├── models
-│   ├── ai_routes
-│   └── main.py
-│   
+├── ai-service/                     # Python FastAPI AI service
+│   ├── extraction/
+│   │   ├── parser.py
+│   │   ├── llm_extractor.py
+│   │   ├── jd_extractor.py
+│   │   └── prompts.py
+│   ├── matching/
+│   │   ├── embedding_service.py
+│   │   ├── semantic_matcher.py
+│   │   ├── skill_matcher.py
+│   │   ├── eligibility_matcher.py
+│   │   └── scoring.py
+│   ├── models/
+│   │   └── embedding_model.py
+│   ├── routes/
+│   │   └── ai_routes.py
+│   ├── llm/
+│   │   └── client.py
+│   ├── utils/
+│   │   ├── json_cleaner.py
+│   │   └── skill_normalizer.py
+│   ├── main.py
+│   └── requirements.txt
+│
 └── README.md
 ```
 
 ---
 
-## 🎯 ATS Scoring Methodology
+## Main Modules
 
-The final ATS score is calculated using a weighted combination of:
+### Authentication
 
-| Metric              | Weight |
-| ------------------- | ------ |
-| Semantic Similarity | 60%    |
-| Skill Matching      | 40%    |
+JWT-based registration, login, protected routes, and authenticated user workflows.
 
-### Semantic Analysis
+### Resume Management
 
-Measures how closely the resume content aligns with the job description using Sentence Transformers.
+Users can upload resumes, specify a target role, view extracted information, and delete resumes.
 
-### Skill Matching
+The AI service extracts:
 
-Compares:
+- Candidate information
+- Technical skills
+- Tools
+- Experience
+- Projects
+- Education
+- Certifications
+- Training
+- Achievements
+- Candidate summary
 
-* Required Skills
-* Preferred Skills
-* Candidate Skills
+### Job Analysis
 
-using:
+The selected resume is compared against a job description.
 
-* Exact Matching
-* Skill Alias Mapping
-* Semantic Matching
+The analysis provides:
+
+- Semantic score
+- Skill score
+- Matched skills
+- Missing skills
+- Additional skills
+- Matched required skills
+- Matched preferred skills
+- Missing required skills
+- Missing preferred skills
+- Education match
+- Experience match
+- Eligibility warnings
+- Final score
+
+### Application Email
+
+Generates application emails and allows users to refine them with natural-language instructions.
+
+### Drafts
+
+Users can save and manage generated application emails.
+
+### Interview Coach
+
+AI-powered interview practice supporting:
+
+- Technical questions
+- Project discussions
+- HR preparation
+- Mock interviews
+- Resume-based coaching
 
 ---
 
-## 🧩 Skill Intelligence Engine
+## API Endpoints
 
-TalentMatch AI normalizes and maps skill aliases to improve ATS accuracy.
+### Node.js API
 
-Examples:
+Base URL:
 
 ```text
-ReactJS      → React
-NodeJS       → Node.js
-Frontend     → Front-End Development
-NLP          → Natural Language Processing
+https://talent-match-ai-server.vercel.app
 ```
 
-This improves matching quality beyond simple keyword comparisons.
+Common endpoints:
+
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+
+GET    /api/resume
+POST   /api/resume
+GET    /api/resume/:resumeId
+DELETE /api/resume/:resumeId
+
+POST   /api/analysis
+
+POST   /api/application-email
+GET    /api/application-email
+GET    /api/application-email/:id
+DELETE /api/application-email/:id
+
+POST   /api/interview-chat
+```
+
+### AI Service
+
+Base URL:
+
+```text
+https://talentmatch-ai-1-aok7.onrender.com
+```
+
+Health check:
+
+```text
+GET /
+```
+
+Expected response:
+
+```json
+{
+  "status": "ok",
+  "service": "TalentMatch AI Service"
+}
+```
+
+AI endpoints:
+
+```text
+POST /api/ai/extract-resume
+POST /api/ai/analyze-job
+```
 
 ---
 
-## 🚀 Getting Started
+## Resume Processing Flow
 
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/your-username/TalentMatch-AI.git
-
-cd TalentMatch-AI
+```text
+PDF / DOCX
+    │
+    ▼
+React Frontend
+    │
+    ▼
+Node.js API
+    │
+    ▼
+FastAPI AI Service
+    │
+    ├── PDF/DOCX text extraction
+    ├── Groq LLM structured extraction
+    └── 384-dimensional HashingVectorizer
+    │
+    ▼
+Node.js API
+    │
+    ▼
+MongoDB
+    │
+    ▼
+Frontend
 ```
 
 ---
 
-### 2. Frontend Setup
+## Job Analysis Flow
 
-```bash
-cd client
-
-npm install
-
-npm run dev
+```text
+Saved Resume
+     │
+     ├── Structured Resume Data
+     └── Resume Embedding
+              │
+              ▼
+       Job Description
+              │
+              ▼
+        JD Extraction
+              │
+      ┌───────┼────────┐
+      ▼       ▼        ▼
+ Semantic   Skill   Eligibility
+ Matching  Matching   Matching
+      │       │        │
+      └───────┼────────┘
+              ▼
+        Final Score
+              │
+              ▼
+         Node.js API
+              │
+              ▼
+           Frontend
 ```
 
 ---
 
-### 3. Backend Setup
+## Environment Variables
 
-```bash
-cd server
-
-npm install
-
-npm run dev
-```
-
----
-
-### 4. AI Service Setup
-
-```bash
-cd ai-service
-
-pip install -r requirements.txt
-
-uvicorn main:app --reload
-```
-
----
-
-## ⚙️ Environment Variables
-
-### Server (.env)
+### Frontend
 
 ```env
-PORT=5000
-
-MONGO_URI=your_mongodb_uri
-
-JWT_SECRET=your_jwt_secret
-
-AI_SERVICE_URL=http://localhost:8000
+VITE_API_URL=https://talent-match-ai-server.vercel.app
 ```
 
-### AI Service (.env)
+### Node.js Server
+
+```env
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+AI_SERVICE_URL=https://talentmatch-ai-1-aok7.onrender.com/api/ai
+CLIENT_URL=your_frontend_url
+```
+
+### AI Service
 
 ```env
 GROQ_API_KEY=your_groq_api_key
 ```
 
+Never commit `.env` files.
+
 ---
 
-## 📸 Screenshots
+## Local Development
 
-Add screenshots here:
+### Frontend
 
-## Dashboard
+```bash
+cd client
+npm install
+npm run dev
+```
 
-![Dashboard](screenshots/dashboard.png)
+### Node.js Backend
 
-## Upload Resume
+```bash
+cd server
+npm install
+npm run dev
+```
 
-![Upload Resume](screenshots/upload.png)
+### AI Service
 
-## ATS Analysis Report
+```bash
+cd ai-service
 
-![ATS Report](screenshots/report.png)
+python -m venv venv
+```
 
+Windows:
 
+```bash
+venv\Scriptsctivate
+```
+
+Linux/macOS:
+
+```bash
+source venv/bin/activate
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Run:
+
+```bash
+uvicorn main:app --reload
 ```
 
 ---
 
-## 🔮 Future Enhancements
+## Deployment
 
-* Resume Rewrite Assistant
-* AI Resume Optimization Suggestions
-* Resume Versioning
-* PDF Report Export
-* Cover Letter Generation
-* Job Recommendation Engine
-* Resume Comparison
-* ATS Score Trend Analysis
+| Component | Platform | URL |
+|---|---|---|
+| Frontend | Vercel | https://talent-match-ai.vercel.app/ |
+| Node.js API | Vercel | https://talent-match-ai-server.vercel.app/ |
+| AI Service | Render | https://talentmatch-ai-1-aok7.onrender.com/ |
+| Database | MongoDB | Private |
 
----
+The Node.js server communicates with the AI service using:
 
-## 📚 Learning Outcomes
-
-This project demonstrates:
-
-* Full Stack Development (MERN)
-* FastAPI Microservices
-* Natural Language Processing (NLP)
-* Semantic Similarity Analysis
-* LLM Integration
-* REST API Design
-* JWT Authentication
-* MongoDB Data Modeling
-* AI Product Architecture
+```env
+AI_SERVICE_URL=https://talentmatch-ai-1-aok7.onrender.com/api/ai
+```
 
 ---
 
-## 👨‍💻 Author
+## Performance / Deployment Decision
 
-**Vinay Kumar Patel**
+The AI service originally used SentenceTransformer/PyTorch embeddings. This caused the Render service to exceed its 512 MiB memory limit.
 
-* MERN Stack Developer
-* Machine Learning Enthusiast
-* B.Tech Student
+The current lightweight implementation uses:
 
-GitHub: https://github.com/vkp0007
+```text
+HashingVectorizer
++
+Cosine Similarity
+```
+
+This removes the heavy PyTorch/SentenceTransformer runtime and makes the AI service suitable for the current deployment environment.
 
 ---
 
-⭐ If you found this project interesting, consider giving it a star.
+## Security
+
+For a public repository:
+
+- Use a dedicated demo account.
+- Never commit `.env`.
+- Never publish Groq API keys.
+- Never publish MongoDB credentials.
+- Never publish JWT secrets.
+- Do not use personal production credentials in the README.
+- Avoid uploading sensitive personal resumes to the public demo account.
+
+---
+
+## Future Improvements
+
+- Persistent cloud resume storage
+- More advanced semantic embeddings
+- Improved JD extraction
+- Resume versioning
+- Application tracking
+- Interview performance analytics
+- Job-board integrations
+- Email sending integration
+- Advanced ATS recommendations
+- Recruiter-facing features
+
+---
+
+## Author
+
+TalentMatch AI is a full-stack AI career assistance platform combining React, Node.js, MongoDB, FastAPI, LLMs, NLP, and machine-learning-based job matching.
