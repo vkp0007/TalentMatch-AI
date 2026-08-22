@@ -414,81 +414,88 @@ const ApplicationEmail = () => {
                     PAGE HEADER
                 ================================================= */}
 
-                <div className="
-                    flex
-                    flex-col
-                    sm:flex-row
-                    sm:items-end
-                    sm:justify-between
-                    gap-5
-                    mb-8
-                ">
+<div className="
+    pt-4
+    mb-8
+    flex
+    flex-col
+    sm:flex-row
+    sm:items-start
+    sm:justify-between
+    gap-5
+">
 
-                    <div>
+    {/* LEFT */}
 
+    <div>
 
-
-                        <h1 className="
-                            mt-3
-                            text-2xl
-                            sm:text-3xl
-                            font-semibold
-                            tracking-tight
-                            text-gray-900
-                        ">
-                            Application Email
-                        </h1>
-
-
-                        <p className="
-                            mt-1.5
-                            text-sm
-                            leading-6
-                            text-gray-500
-                            max-w-xl
-                        ">
-                            Create a professional application email
-                            tailored to the job you're applying for.
-                        </p>
-
-                    </div>
+        <h1 className="
+            text-2xl
+            sm:text-3xl
+            font-semibold
+            tracking-tight
+            text-gray-900
+        ">
+            Application Email
+        </h1>
 
 
-                    {/* EXISTING BUTTON — UI UPDATED ONLY */}
+        <p className="
+            mt-1.5
+            text-sm
+            leading-6
+            text-gray-500
+            max-w-xl
+        ">
+            Create a professional application email
+            tailored to the job you're applying for.
+        </p>
 
-                    <button
-                        type="button"
-                        onClick={() =>
-                            navigate("/drafts")
-                        }
-                        className="
-                            shrink-0
-                            inline-flex
-                            items-center
-                            justify-center
-                            px-4
-                            py-2.5
-                            rounded-xl
-                            border
-                            border-[#E2DACC]
-                            bg-white
-                            text-sm
-                            font-medium
-                            text-gray-700
-                            shadow-sm
-                            hover:bg-[#F7F3EA]
-                            hover:border-[#D5CBBB]
-                            hover:text-gray-900
-                            hover:shadow-md
-                            transition-all
-                            duration-200
-                        "
-                    >
-                        Existing Drafts
-                    </button>
+    </div>
 
-                </div>
 
+    {/* EXISTING DRAFTS */}
+
+    <button
+        type="button"
+        onClick={() =>
+            navigate("/drafts")
+        }
+        className="
+            shrink-0
+            inline-flex
+            items-center
+            justify-center
+            gap-2
+            px-4
+            py-2.5
+            rounded-xl
+            border
+            border-[#E8E2D7]
+            bg-white
+            text-sm
+            font-medium
+            text-gray-700
+            shadow-sm
+            hover:bg-[#F7F3EA]
+            hover:border-[#DCD4C6]
+            hover:text-gray-900
+            hover:shadow
+            transition-all
+            duration-200
+        "
+    >
+
+        Existing Drafts
+
+        <ArrowRight
+            size={15}
+            strokeWidth={1.8}
+        />
+
+    </button>
+
+</div>
 
                 {/* =================================================
                     ERROR

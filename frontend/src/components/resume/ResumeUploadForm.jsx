@@ -349,31 +349,30 @@ const ResumeUploadForm = ({
                             id="resumeFile"
                             type="file"
                             accept=".pdf,.doc,.docx"
-                            onChange={
-                                onFileChange
-                            }
+                            onChange={onFileChange}
                             disabled={uploading}
                             className="
-                                mt-4
-                                block
-                                w-full
-                                text-xs
-                                text-gray-500
-                                file:mr-3
-                                file:rounded-lg
-                                file:border-0
-                                file:bg-gray-900
-                                file:px-3.5
-                                file:py-2
-                                file:text-xs
-                                file:font-medium
-                                file:text-white
-                                file:cursor-pointer
-                                hover:file:bg-gray-800
-                                transition
-                                disabled:opacity-50
-                                disabled:cursor-not-allowed
-                            "
+                                        mt-4
+                                        mx-auto
+                                        block
+                                        w-fit
+                                        text-xs
+                                        text-gray-500
+                                        file:mr-3
+                                        file:rounded-lg
+                                        file:border-0
+                                        file:bg-gray-900
+                                        file:px-3.5
+                                        file:py-2
+                                        file:text-xs
+                                        file:font-medium
+                                        file:text-white
+                                        file:cursor-pointer
+                                        hover:file:bg-gray-800
+                                        transition
+                                        disabled:opacity-50
+                                        disabled:cursor-not-allowed
+                                    "
                         />
 
                     </div>
