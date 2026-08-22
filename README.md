@@ -4,16 +4,15 @@ TalentMatch AI is an AI-powered career assistance platform that helps candidates
 
 ## Live Demo
 
-- **Frontend:** https://talent-match-ai.vercel.app/
+- **Frontend:** https://talent-match-ai-dun.vercel.app/
 - **Node.js API:** https://talent-match-ai-server.vercel.app/
-- **AI Service:** https://talentmatch-ai-1-aok7.onrender.com/
 
 ## Demo Credentials
 
 > Replace these placeholders with a **dedicated demo account** before publishing the README.
 
-- **Email:** `YOUR_DEMO_EMAIL`
-- **Password:** `YOUR_DEMO_PASSWORD`
+- **Email:** `vinayptl47@gmail.com`
+- **Password:** `Vinay@123`
 
 **Security:** Never publish personal credentials, API keys, MongoDB credentials, JWT secrets, or Groq API keys. Use a separate demo account for public testing.
 
@@ -268,10 +267,6 @@ AI-powered interview practice supporting:
 
 Base URL:
 
-```text
-https://talent-match-ai-server.vercel.app
-```
-
 Common endpoints:
 
 ```text
@@ -294,12 +289,6 @@ POST   /api/interview-chat
 ```
 
 ### AI Service
-
-Base URL:
-
-```text
-https://talentmatch-ai-1-aok7.onrender.com
-```
 
 Health check:
 
@@ -443,7 +432,7 @@ python -m venv venv
 Windows:
 
 ```bash
-venv\Scriptsctivate
+venv\Scriptsactivate
 ```
 
 Linux/macOS:
@@ -470,16 +459,8 @@ uvicorn main:app --reload
 
 | Component | Platform | URL |
 |---|---|---|
-| Frontend | Vercel | https://talent-match-ai.vercel.app/ |
+| Frontend | Vercel | https://talent-match-ai-dun.vercel.app/ |
 | Node.js API | Vercel | https://talent-match-ai-server.vercel.app/ |
-| AI Service | Render | https://talentmatch-ai-1-aok7.onrender.com/ |
-| Database | MongoDB | Private |
-
-The Node.js server communicates with the AI service using:
-
-```env
-AI_SERVICE_URL=https://talentmatch-ai-1-aok7.onrender.com/api/ai
-```
 
 ---
 
