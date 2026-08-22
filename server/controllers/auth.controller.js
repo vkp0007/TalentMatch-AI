@@ -154,8 +154,6 @@ export const loginUser = async (req, res) => {
 // get logged-in user profile
 export const getUserProfile = async (req, res) => {
 
-    console.time("GET /profile TOTAL");
-    console.time("GET /profile DB");
 
     try {
 
@@ -164,7 +162,7 @@ export const getUserProfile = async (req, res) => {
                 req.user._id
             ).select("-password");
 
-        console.timeEnd("GET /profile DB");
+
 
         if (!user) {
 
@@ -181,15 +179,12 @@ export const getUserProfile = async (req, res) => {
 
     } catch (error) {
 
-        console.timeEnd("GET /profile DB");
+
 
         return res.status(500).json({
             success: false,
             message: error.message
         });
 
-    } finally {
-
-        console.timeEnd("GET /profile TOTAL");
     }
 };

@@ -33,30 +33,6 @@ databaseConnection();
 
 
 // =========================================================
-// REQUEST TIMING — TEMPORARY DEBUGGING
-// =========================================================
-
-app.use((req, res, next) => {
-
-    const start = performance.now();
-
-    res.on("finish", () => {
-
-        const duration =
-            performance.now() - start;
-
-        console.log(
-            `${req.method} ${req.originalUrl} → ` +
-            `${res.statusCode} → ` +
-            `${duration.toFixed(2)}ms`
-        );
-    });
-
-    next();
-});
-
-
-// =========================================================
 // ROUTES
 // =========================================================
 

@@ -3,7 +3,6 @@ import { User } from "../models/user.model.js";
 
 export const protect = async (req, res, next) => {
 
-    console.time("AUTH TOTAL");
 
     try {
 
@@ -21,7 +20,7 @@ export const protect = async (req, res, next) => {
 
         // token missing
         if (!token) {
-            console.timeEnd("AUTH TOTAL");
+         
 
             return res.status(401).json({
                 success: false,
@@ -30,33 +29,21 @@ export const protect = async (req, res, next) => {
         }
 
 
-        // JWT verification
-        console.time("JWT VERIFY");
-
         const decoded =
             jwt.verify(
                 token,
                 process.env.JWT_SECRET
             );
 
-        console.timeEnd("JWT VERIFY");
-
-
-        // MongoDB user lookup
-        console.time("AUTH USER DB");
 
         req.user =
             await User.findById(
                 decoded.id
             ).select("-password");
 
-        console.timeEnd("AUTH USER DB");
-
 
         // user missing
         if (!req.user) {
-
-            console.timeEnd("AUTH TOTAL");
 
             return res.status(401).json({
                 success: false,
@@ -64,13 +51,9 @@ export const protect = async (req, res, next) => {
             });
         }
 
-        console.timeEnd("AUTH TOTAL");
-
         next();
 
     } catch (error) {
-
-        console.timeEnd("AUTH TOTAL");
 
         return res.status(401).json({
             success: false,

@@ -80,8 +80,6 @@ export const uploadResume = async (
 
 export const getUserResumes = async (req, res, next) => {
 
-    console.time("GET /resume TOTAL");
-    console.time("GET /resume DB");
 
     try {
 
@@ -96,7 +94,6 @@ export const getUserResumes = async (req, res, next) => {
                 createdAt: -1
             });
 
-        console.timeEnd("GET /resume DB");
 
         return res.status(200).json({
             success: true,
@@ -105,12 +102,7 @@ export const getUserResumes = async (req, res, next) => {
 
     } catch (error) {
 
-        console.timeEnd("GET /resume DB");
         next(error);
-
-    } finally {
-
-        console.timeEnd("GET /resume TOTAL");
 
     }
 };
