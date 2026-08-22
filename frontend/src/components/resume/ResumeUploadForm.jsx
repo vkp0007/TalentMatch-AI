@@ -283,40 +283,49 @@ const ResumeUploadForm = ({
 
                 {!file ? (
 
-                    <div className="
-                        group
-                        relative
-                        rounded-2xl
-                        border-2
-                        border-dashed
-                        border-[#DCD4C6]
-                        bg-white/70
-                        px-5
-                        py-7
-                        text-center
-                        transition-all
-                        duration-200
-                        hover:border-[#BEB4A3]
-                        hover:bg-white
-                    ">
+                    <label
+                        htmlFor="resumeFile"
+                        className="
+            group
+            relative
+            block
+            rounded-2xl
+            border-2
+            border-dashed
+            border-[#DCD4C6]
+            bg-white/70
+            px-5
+            py-7
+            text-center
+            cursor-pointer
+            transition-all
+            duration-200
+            hover:border-[#BEB4A3]
+            hover:bg-white
+        "
+                    >
+
+                        {/* UPLOAD ICON */}
 
                         <div className="
-                            w-11
-                            h-11
-                            mx-auto
-                            rounded-xl
-                            bg-[#F7F3EA]
-                            border
-                            border-[#E8E2D7]
-                            flex
-                            items-center
-                            justify-center
-                            text-gray-500
-                            transition-all
-                            duration-200
-                            group-hover:bg-white
-                            group-hover:shadow-sm
-                        ">
+            w-11
+            h-11
+            mx-auto
+            rounded-xl
+            bg-[#F7F3EA]
+            border
+            border-[#E8E2D7]
+            flex
+            items-center
+            justify-center
+            text-gray-500
+            transition-all
+            duration-200
+            group-hover:bg-white
+            group-hover:text-gray-700
+            group-hover:shadow-sm
+            group-hover:-translate-y-0.5
+        ">
 
                             <Upload
                                 size={19}
@@ -327,23 +336,25 @@ const ResumeUploadForm = ({
 
 
                         <p className="
-                            mt-3
-                            text-sm
-                            font-medium
-                            text-gray-800
-                        ">
+            mt-3
+            text-sm
+            font-medium
+            text-gray-800
+        ">
                             Choose your resume
                         </p>
 
 
                         <p className="
-                            mt-1
-                            text-xs
-                            text-gray-400
-                        ">
-                            Select a PDF, DOC, or DOCX file
+            mt-1
+            text-xs
+            text-gray-400
+        ">
+                            Click to select a PDF, DOC, or DOCX file
                         </p>
 
+
+                        {/* HIDDEN FILE INPUT */}
 
                         <input
                             id="resumeFile"
@@ -351,31 +362,10 @@ const ResumeUploadForm = ({
                             accept=".pdf,.doc,.docx"
                             onChange={onFileChange}
                             disabled={uploading}
-                            className="
-                                        mt-4
-                                        mx-auto
-                                        block
-                                        w-fit
-                                        text-xs
-                                        text-gray-500
-                                        file:mr-3
-                                        file:rounded-lg
-                                        file:border-0
-                                        file:bg-gray-900
-                                        file:px-3.5
-                                        file:py-2
-                                        file:text-xs
-                                        file:font-medium
-                                        file:text-white
-                                        file:cursor-pointer
-                                        hover:file:bg-gray-800
-                                        transition
-                                        disabled:opacity-50
-                                        disabled:cursor-not-allowed
-                                    "
+                            className="hidden"
                         />
 
-                    </div>
+                    </label>
 
                 ) : (
 
