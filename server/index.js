@@ -31,12 +31,47 @@ app.use(
 
 databaseConnection();
 
+
+// =========================================================
+// REQUEST TIMING — TEMPORARY DEBUGGING
+// =========================================================
+
+app.use((req, res, next) => {
+
+    const start = performance.now();
+
+    res.on("finish", () => {
+
+        const duration =
+            performance.now() - start;
+
+        console.log(
+            `${req.method} ${req.originalUrl} → ` +
+            `${res.statusCode} → ` +
+            `${duration.toFixed(2)}ms`
+        );
+    });
+
+    next();
+});
+
+
+// =========================================================
+// ROUTES
+// =========================================================
+
 app.use("/api/resume", resumeRoute);
+
 app.use("/api/analysis", analysisRoute);
+
 app.use("/api/auth", authRoutes);
+
 app.use("/api/referral", referralRoutes);
+
 app.use("/api/application-email", applicationEmailRoutes);
+
 app.use("/api/recommendations", recommendationRoutes);
+
 app.use("/api/interview-chat", interviewChatRoutes);
 
 app.get("/", (req, res) => {
